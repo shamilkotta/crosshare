@@ -16,38 +16,39 @@ export const Colors = {
     icon: '#687076',
     tabIconDefault: '#687076',
     tabIconSelected: tintColorLight,
+    mutedText: '#999',
+    subtleText: '#CCC',
+    border: '#b7b7b7ff',
+    surface: '#F0F0F0',
+    circleColor: 'rgba(0, 0, 0, 0.15)',
+    dark: '#000000',
+    light: '#FFFFFF',
   },
   dark: {
     text: '#ECEDEE',
-    background: '#151718',
+    background: '#000000',
     tint: tintColorDark,
     icon: '#9BA1A6',
     tabIconDefault: '#9BA1A6',
     tabIconSelected: tintColorDark,
+    mutedText: '#666',
+    subtleText: '#444',
+    border: '#4e4e4eff',
+    surface: '#1A1A1A',
+    circleColor: 'rgba(255, 255, 255, 0.4)',
+    dark: '#FFF',
+    light: '#000000',
   },
 };
 
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
+export const Fonts = {
+  sans: {
+    regular: 'Geist-Regular',
+    medium: 'Geist-Medium',
+    semiBold: 'Geist-SemiBold',
+    bold: 'Geist-Bold',
   },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
+  mono: {
+    regular: 'GeistMono-Regular',
   },
-  web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-  },
-});
+};
