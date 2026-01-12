@@ -64,7 +64,10 @@ export default function HomeScreen() {
       <SafeAreaView style={styles.safeArea}>
         {/* Top Navigation */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.headerButton}>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => router.push('/profile')}
+          >
             <View
               style={[
                 styles.profileIconContainer,

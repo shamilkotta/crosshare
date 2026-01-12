@@ -60,6 +60,7 @@ function LayoutContent() {
           options={{ presentation: 'modal', title: 'Modal' }}
         />
         <Stack.Screen name="searching" options={{ headerShown: false }} />
+        <Stack.Screen name="profile" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
     </NavigationThemeProvider>
