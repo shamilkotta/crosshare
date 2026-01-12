@@ -1,0 +1,10 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "@crossshare/lan": ["../src/index"],
+      "@crossshare/lan/*": ["../src/*"]
+    }
+  }
+}
