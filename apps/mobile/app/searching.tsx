@@ -12,6 +12,8 @@ import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, Fonts } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useTransfer } from '@/context/transfer-context';
+import { NearbyDevicesModal } from '@/components/nearby-devices-modal';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -157,8 +159,116 @@ const LoadingDot = ({ delay, color }: { delay: number; color: string }) => {
 
 export default function SearchingScreen() {
   const router = useRouter();
+  const [isModalVisible, setIsModalVisible] = React.useState(false);
   const colorScheme = useColorScheme() ?? 'light';
   const themeColors = Colors[colorScheme];
+  const { startSession } = useTransfer();
+
+  const mockDevices = [
+    { id: '1', name: "Sarah's iPhone", icon: 'iphone', status: 'AVAILABLE' },
+    { id: '2', name: 'Alex J.', initials: 'AJ', status: 'AVAILABLE' },
+    {
+      id: '3',
+      name: 'Studio Mac',
+      icon: 'desktopcomputer',
+      status: 'AVAILABLE',
+    },
+    { id: '4', name: 'iPad Air', initials: 'MK', status: 'AVAILABLE' },
+  ];
+
+  const mockSingleTransfer = () => {
+    startSession({
+      id: 'session-1',
+      status: 'transferring',
+      users: [
+        {
+          id: 'user-1',
+          name: 'Alex',
+          deviceName: 'iPhone 15 Pro',
+          status: 'transferring',
+          files: [
+            {
+              id: 'file-1',
+              name: 'presentation_final.pdf',
+              size: 18 * 1024 * 1024,
+              transferred: 12.5 * 1024 * 1024,
+              status: 'transferring',
+            },
+          ],
+        },
+      ],
+    });
+  };
+
+  const mockMultiUserTransfer = () => {
+    startSession({
+      id: 'session-2',
+      status: 'transferring',
+      users: [
+        {
+          id: 'user-1',
+          name: 'Alex',
+          deviceName: 'iPhone 15 Pro',
+          status: 'transferring',
+          files: [
+            {
+              id: 'file-1',
+              name: 'photo.jpg',
+              size: 5 * 1024 * 1024,
+              transferred: 2 * 1024 * 1024,
+              status: 'transferring',
+            },
+          ],
+        },
+        {
+          id: 'user-2',
+          name: 'Sarah',
+          deviceName: "Sarah's MacBook",
+          status: 'transferring',
+          files: [
+            {
+              id: 'file-2',
+              name: 'photo.jpg',
+              size: 5 * 1024 * 1024,
+              transferred: 4 * 1024 * 1024,
+              status: 'transferring',
+            },
+          ],
+        },
+      ],
+    });
+  };
+
+  const mockMultiFileTransfer = () => {
+    startSession({
+      id: 'session-3',
+      status: 'transferring',
+      users: [
+        {
+          id: 'user-1',
+          name: 'Alex',
+          deviceName: 'iPhone 15 Pro',
+          status: 'transferring',
+          files: [
+            {
+              id: 'file-1',
+              name: 'doc1.pdf',
+              size: 10 * 1024 * 1024,
+              transferred: 8 * 1024 * 1024,
+              status: 'transferring',
+            },
+            {
+              id: 'file-2',
+              name: 'image.png',
+              size: 5 * 1024 * 1024,
+              transferred: 1 * 1024 * 1024,
+              status: 'transferring',
+            },
+          ],
+        },
+      ],
+    });
+  };
 
   return (
     <View
@@ -257,7 +367,8 @@ export default function SearchingScreen() {
               sharing.
             </Text>
 
-            <View
+            <TouchableOpacity
+              onPress={() => setIsModalVisible(true)}
               style={[
                 styles.foundPill,
                 {
@@ -287,10 +398,38 @@ export default function SearchingScreen() {
               <Text
                 style={[styles.foundText, { color: themeColors.mutedText }]}
               >
-                5 FOUND
+                {mockDevices.length} FOUND
               </Text>
-            </View>
+            </TouchableOpacity>
           </View>
+        </View>
+
+        <NearbyDevicesModal
+          isVisible={isModalVisible}
+          onClose={() => setIsModalVisible(false)}
+          devices={mockDevices}
+        />
+
+        {/* Test Toolbar */}
+        <View style={styles.testToolbar}>
+          <TouchableOpacity
+            style={styles.testButton}
+            onPress={mockSingleTransfer}
+          >
+            <Text style={styles.testButtonText}>Single</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.testButton}
+            onPress={mockMultiUserTransfer}
+          >
+            <Text style={styles.testButtonText}>Multi User</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.testButton}
+            onPress={mockMultiFileTransfer}
+          >
+            <Text style={styles.testButtonText}>Multi File</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     </View>
@@ -450,5 +589,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: Fonts.sans.bold,
     letterSpacing: 1,
+  },
+  testToolbar: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+    padding: 10,
+  },
+  testButton: {
+    backgroundColor: '#333',
+    padding: 8,
+    borderRadius: 8,
+  },
+  testButtonText: {
+    color: '#FFF',
+    fontSize: 12,
   },
 });
