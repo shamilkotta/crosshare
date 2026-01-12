@@ -137,36 +137,6 @@ export default function HomeScreen() {
           </View>
           <Text style={[styles.stepText, { color: themeColors.subtleText }]}>STEP 1 OF 3</Text>
         </View> */}
-
-        {/* Theme Selection Modal */}
-        <Modal
-          animationType="fade"
-          transparent={true}
-          visible={isThemeModalVisible}
-          onRequestClose={() => setThemeModalVisible(false)}
-        >
-          <Pressable
-            style={styles.modalOverlay}
-            onPress={() => setThemeModalVisible(false)}
-          >
-            <View
-              style={[
-                styles.modalContent,
-                {
-                  backgroundColor: themeColors.background,
-                  borderColor: themeColors.border,
-                },
-              ]}
-            >
-              <Text style={[styles.modalTitle, { color: themeColors.text }]}>
-                Select Theme
-              </Text>
-              <ThemeOption mode="light" label="White (Light)" />
-              <ThemeOption mode="dark" label="Dark" />
-              <ThemeOption mode="system" label="System" />
-            </View>
-          </Pressable>
-        </Modal>
       </SafeAreaView>
     </View>
   );
@@ -296,7 +266,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 15,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 0,
   },
   activeThemeOption: {
     // Optional active style

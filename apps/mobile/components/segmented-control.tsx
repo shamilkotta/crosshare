@@ -53,7 +53,6 @@ export const SegmentedControl = ({
       style={[
         styles.container,
         {
-          backgroundColor: themeColors.surface,
           borderColor: themeColors.border,
         },
       ]}

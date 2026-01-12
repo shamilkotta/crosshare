@@ -29,7 +29,7 @@ const AnimatedCircle = ({ delay, color }: CircleProps) => {
       delay,
       withRepeat(
         withTiming(1, {
-          duration: 2000,
+          duration: 3000,
           easing: Easing.bezier(0.25, 0.1, 0.25, 1),
         }),
         -1,
@@ -72,7 +72,7 @@ export function PlusAnimatedCircles({ onPress }: { onPress?: () => void }) {
       {[...Array(CIRCLE_COUNT)].map((_, i) => (
         <AnimatedCircle
           key={i}
-          delay={i * 600}
+          delay={i * 1000}
           color={themeColors.circleColor}
         />
       ))}
