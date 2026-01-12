@@ -94,7 +94,10 @@ export default function HomeScreen() {
                 ]}
               />
             </View>
-            <TouchableOpacity style={styles.navItemContainer}>
+            <TouchableOpacity
+              style={styles.navItemContainer}
+              onPress={() => router.push('/history')}
+            >
               <Text style={[styles.navText, { color: themeColors.mutedText }]}>
                 HISTORY
               </Text>

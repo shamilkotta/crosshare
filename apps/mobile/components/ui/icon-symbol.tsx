@@ -30,7 +30,7 @@ const MAPPING = {
   'arrow.left': 'arrow-back',
   'doc.fill': 'description',
   'photo.fill': 'image',
-  'archive.fill': 'archive',
+  'archive.fill': 'folder-zip',
   'video.fill': 'videocam',
   'music.note': 'audiotrack',
   'checkmark.circle.fill': 'check-circle',
