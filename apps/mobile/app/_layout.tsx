@@ -13,6 +13,7 @@ import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ThemeProvider } from '@/context/theme-context';
 import { TransferProvider } from '@/context/transfer-context';
+import { LanProvider } from '@/context/lan-context';
 import { TransferStatus } from '@/components/transfer-status';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -44,8 +45,10 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <TransferProvider>
-        <LayoutContent />
-        <TransferStatus />
+        <LanProvider>
+          <LayoutContent />
+          <TransferStatus />
+        </LanProvider>
       </TransferProvider>
     </ThemeProvider>
   );

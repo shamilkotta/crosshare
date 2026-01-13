@@ -13,6 +13,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, Fonts } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTransfer } from '@/context/transfer-context';
+import { useLan } from '@/context/lan-context';
 import { NearbyDevicesModal } from '@/components/nearby-devices-modal';
 import Animated, {
   useAnimatedStyle,
@@ -163,18 +164,33 @@ export default function SearchingScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const themeColors = Colors[colorScheme];
   const { startSession } = useTransfer();
+  const {
+    peers,
+    startDiscovery,
+    stopDiscovery,
+    startAdvertising,
+    stopAdvertising,
+  } = useLan();
 
-  const mockDevices = [
-    { id: '1', name: "Sarah's iPhone", icon: 'iphone', status: 'AVAILABLE' },
-    { id: '2', name: 'Alex J.', initials: 'AJ', status: 'AVAILABLE' },
-    {
-      id: '3',
-      name: 'Studio Mac',
-      icon: 'desktopcomputer',
-      status: 'AVAILABLE',
-    },
-    { id: '4', name: 'iPad Air', initials: 'MK', status: 'AVAILABLE' },
-  ];
+  useEffect(() => {
+    // Start discovery and advertising when screen mounts
+    startDiscovery();
+    // For now using a default port, this should ideally come from a server/service
+    startAdvertising('My iPhone', 8080);
+
+    return () => {
+      stopDiscovery();
+      stopAdvertising();
+    };
+  }, [startDiscovery, stopDiscovery, startAdvertising, stopAdvertising]);
+
+  // Map LanPeer to the format expected by the UI components if needed
+  const devices = peers.map((peer) => ({
+    id: peer.id,
+    name: peer.name,
+    icon: (peer.platform === 'macos' ? 'desktopcomputer' : 'iphone') as any,
+    status: 'AVAILABLE' as const,
+  }));
 
   const mockSingleTransfer = () => {
     startSession({
@@ -310,41 +326,27 @@ export default function SearchingScreen() {
             </View>
 
             {/* Device Nodes */}
-            <DeviceNode
-              label="Sarah"
-              image="https://i.pravatar.cc/150?u=sarah"
-              top="10%"
-              left="15%"
-              delay={500}
-            />
-            <DeviceNode
-              label="Alex J."
-              image="https://i.pravatar.cc/150?u=alex"
-              top="55%"
-              left="5%"
-              delay={1200}
-            />
-            <DeviceNode
-              label="MK"
-              initials="MK"
-              top="50%"
-              left="75%"
-              delay={800}
-            />
-            <DeviceNode
-              label="Ipad Air"
-              initials="IA"
-              top="75%"
-              left="60%"
-              delay={1500}
-            />
-            <DeviceNode
-              label="Studio"
-              icon="laptopcomputer"
-              top="30%"
-              left="85%"
-              delay={2000}
-            />
+            {devices.slice(0, 5).map((device, index) => {
+              // Simple layout logic for discovered devices
+              const positions = [
+                { top: '10%', left: '15%' },
+                { top: '55%', left: '5%' },
+                { top: '50%', left: '75%' },
+                { top: '75%', left: '60%' },
+                { top: '30%', left: '85%' },
+              ];
+              const pos = positions[index % positions.length];
+              return (
+                <DeviceNode
+                  key={device.id}
+                  label={device.name}
+                  icon={device.icon}
+                  top={pos.top as any}
+                  left={pos.left as any}
+                  delay={index * 300}
+                />
+              );
+            })}
           </View>
 
           {/* Bottom Section */}
@@ -398,7 +400,7 @@ export default function SearchingScreen() {
               <Text
                 style={[styles.foundText, { color: themeColors.mutedText }]}
               >
-                {mockDevices.length} FOUND
+                {devices.length} FOUND
               </Text>
             </TouchableOpacity>
           </View>
@@ -407,7 +409,7 @@ export default function SearchingScreen() {
         <NearbyDevicesModal
           isVisible={isModalVisible}
           onClose={() => setIsModalVisible(false)}
-          devices={mockDevices}
+          devices={devices}
         />
 
         {/* Test Toolbar */}
