@@ -1,9 +1,10 @@
 {
   "name": "@crossshare/lan",
   "version": "0.1.0",
-  "description": "",
+  "description": "Local network device discovery for Crossshare using mDNS/Bonjour",
   "main": "build/index.js",
   "types": "build/index.d.ts",
+  "homepage": "https://github.com/shamilkotta/crossshare",
   "scripts": {
     "build": "expo-module build",
     "clean": "expo-module clean",
@@ -11,16 +12,23 @@
     "test": "expo-module test",
     "prepare": "expo-module prepare",
     "prepublishOnly": "expo-module prepublishOnly",
-    "expo-module": "expo-module",
-    "open:ios": "xed example/ios",
-    "open:android": "open -a \"Android Studio\" example/android"
+    "expo-module": "expo-module"
   },
   "keywords": [
     "react-native",
     "expo",
-    "@crossshare/lan",
-    "CrossshareLan"
+    "lan",
+    "mdns",
+    "bonjour",
+    "network-discovery",
+    "crossshare"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shamilkotta/crossshare"
+  },
+  "author": "Shamil Kotta",
+  "license": "MIT",
   "dependencies": {},
   "devDependencies": {
     "@types/react": "~19.1.0",

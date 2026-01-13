@@ -2,49 +2,99 @@ package com.crossshare.lan
 
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
-import java.net.URL
 
 class CrossshareLanModule : Module() {
-  // Each module class must implement the definition function. The definition consists of components
-  // that describes the module's functionality and behavior.
-  // See https://docs.expo.dev/modules/module-api for more details about available components.
-  override fun definition() = ModuleDefinition {
-    // Sets the name of the module that JavaScript code will use to refer to the module. Takes a string as an argument.
-    // Can be inferred from module's class name, but it's recommended to set it explicitly for clarity.
-    // The module will be accessible from `requireNativeModule('CrossshareLan')` in JavaScript.
-    Name("CrossshareLan")
+    
+    private var discoveryManager: DiscoveryManager? = null
+    private var advertiser: Advertiser? = null
 
-    // Defines constant property on the module.
-    Constant("PI") {
-      Math.PI
+    override fun definition() = ModuleDefinition {
+        // Module name for JavaScript
+        Name("CrossshareLan")
+        
+        // Events that can be sent to JavaScript
+        Events("onPeerFound", "onPeerLost", "onError")
+
+        // Start advertising this device on the network
+        AsyncFunction("startAdvertising") { options: Map<String, Any?> ->
+            val serviceName = options["serviceName"] as? String
+                ?: throw IllegalArgumentException("serviceName is required")
+            
+            val port = (options["port"] as? Number)?.toInt()
+                ?: throw IllegalArgumentException("port is required")
+            
+            @Suppress("UNCHECKED_CAST")
+            val meta = options["meta"] as? Map<String, String>
+            
+            getOrCreateAdvertiser().startAdvertising(serviceName, port, meta)
+        }
+
+        // Stop advertising
+        AsyncFunction("stopAdvertising") {
+            advertiser?.stopAdvertising()
+        }
+
+        // Start discovering other devices
+        AsyncFunction("startDiscovery") {
+            getOrCreateDiscoveryManager().startDiscovery()
+        }
+
+        // Stop discovery
+        AsyncFunction("stopDiscovery") {
+            discoveryManager?.stopDiscovery()
+        }
+
+        // Get currently discovered peers
+        AsyncFunction("getDiscoveredPeers") {
+            discoveryManager?.getDiscoveredPeers()?.map { it.toMap() } ?: emptyList<Map<String, Any?>>()
+        }
+
+        // Cleanup when module is destroyed
+        OnDestroy {
+            discoveryManager?.stopDiscovery()
+            advertiser?.stopAdvertising()
+            discoveryManager = null
+            advertiser = null
+        }
     }
+    
+    private fun getOrCreateDiscoveryManager(): DiscoveryManager {
+        return discoveryManager ?: DiscoveryManager(
+            context = appContext.reactContext ?: throw IllegalStateException("React context not available"),
+            listener = object : DiscoveryListener {
+                override fun onPeerFound(peer: LanPeer) {
+                    sendEvent("onPeerFound", peer.toMap())
+                }
 
-    // Defines event names that the module can send to JavaScript.
-    Events("onChange")
+                override fun onPeerLost(peerId: String) {
+                    sendEvent("onPeerLost", mapOf("peerId" to peerId))
+                }
 
-    // Defines a JavaScript synchronous function that runs the native code on the JavaScript thread.
-    Function("hello") {
-      "Hello world! 👋"
+                override fun onError(code: String, message: String) {
+                    sendEvent("onError", mapOf(
+                        "code" to code,
+                        "message" to message
+                    ))
+                }
+            }
+        ).also { discoveryManager = it }
     }
+    
+    private fun getOrCreateAdvertiser(): Advertiser {
+        return advertiser ?: Advertiser(
+            context = appContext.reactContext ?: throw IllegalStateException("React context not available"),
+            listener = object : AdvertiserListener {
+                override fun onAdvertisingStarted() {
+                    // Advertising started successfully
+                }
 
-    // Defines a JavaScript function that always returns a Promise and whose native code
-    // is by default dispatched on the different thread than the JavaScript runtime runs on.
-    AsyncFunction("setValueAsync") { value: String ->
-      // Send an event to JavaScript.
-      sendEvent("onChange", mapOf(
-        "value" to value
-      ))
+                override fun onError(code: String, message: String) {
+                    sendEvent("onError", mapOf(
+                        "code" to code,
+                        "message" to message
+                    ))
+                }
+            }
+        ).also { advertiser = it }
     }
-
-    // Enables the module to be used as a native view. Definition components that are accepted as part of
-    // the view definition: Prop, Events.
-    View(CrossshareLanView::class) {
-      // Defines a setter for the `url` prop.
-      Prop("url") { view: CrossshareLanView, url: URL ->
-        view.webView.loadUrl(url.toString())
-      }
-      // Defines an event that the view can send to JavaScript.
-      Events("onLoad")
-    }
-  }
 }
