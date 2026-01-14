@@ -1,6 +1,6 @@
 # @crossshare/lan
 
-Local network device discovery for Crossshare using mDNS/Bonjour. This Expo native module enables peer-to-peer device discovery on the same Wi-Fi network.
+Local network device discovery for Crossshare using mDNS/Bonjour, enabling peer-to-peer discovery on the same Wi‑Fi network.
 
 ## Features
 
