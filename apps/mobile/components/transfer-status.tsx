@@ -22,7 +22,8 @@ const formatSize = (bytes: number) => {
 };
 
 export function TransferStatus() {
-  const { activeSession, cancelSession } = useTransfer();
+  const { activeSession, pendingRequest, cancelSession, respondToRequest } =
+    useTransfer();
   const [isExpanded, setIsExpanded] = useState(false);
   const insets = useSafeAreaInsets();
 
@@ -32,19 +33,94 @@ export function TransferStatus() {
   const surfaceColor = useThemeColor({}, 'surface');
   const borderColor = useThemeColor({}, 'border');
 
-  if (!activeSession) return null;
+  if (!activeSession && !pendingRequest) return null;
 
-  const totalFiles = activeSession.users.reduce(
+  if (pendingRequest) {
+    return (
+      <Animated.View
+        entering={FadeInUp.duration(250)}
+        exiting={FadeOutUp.duration(200)}
+        layout={LinearTransition.duration(250)}
+        style={[
+          styles.container,
+          {
+            top: insets.top + 10,
+            backgroundColor: backgroundColor,
+            borderColor: borderColor,
+          },
+          styles.shadow,
+        ]}
+      >
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <View
+              style={[styles.iconContainer, { backgroundColor: surfaceColor }]}
+            >
+              <IconSymbol
+                name="tray.and.arrow.down.fill"
+                size={18}
+                color={textColor}
+              />
+            </View>
+            <View style={styles.titleContainer}>
+              <ThemedText style={styles.title} numberOfLines={1}>
+                Incoming from {pendingRequest.senderDeviceName}
+              </ThemedText>
+              <ThemedText
+                style={[styles.subtitle, { color: mutedTextColor }]}
+                numberOfLines={1}
+              >
+                {pendingRequest.files.length}{' '}
+                {pendingRequest.files.length === 1 ? 'file' : 'files'} •{' '}
+                {formatSize(
+                  pendingRequest.files.reduce((acc, f) => acc + f.size, 0)
+                )}
+              </ThemedText>
+            </View>
+          </View>
+
+          <View style={styles.requestFooter}>
+            <TouchableOpacity
+              style={[
+                styles.actionButton,
+                { borderColor: borderColor, borderWidth: 1 },
+              ]}
+              onPress={() => respondToRequest(false)}
+            >
+              <ThemedText
+                style={[styles.actionButtonText, { color: textColor }]}
+              >
+                DECLINE
+              </ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, { backgroundColor: textColor }]}
+              onPress={() => respondToRequest(true)}
+            >
+              <ThemedText
+                style={[styles.actionButtonText, { color: backgroundColor }]}
+              >
+                ACCEPT
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Animated.View>
+    );
+  }
+
+  // Active Session UI (Previously existing)
+  const totalFiles = activeSession!.users.reduce(
     (acc, user) => acc + user.files.length,
     0
   );
-  const totalUsers = activeSession.users.length;
+  const totalUsers = activeSession!.users.length;
 
-  const totalSizeBytes = activeSession.users.reduce(
+  const totalSizeBytes = activeSession!.users.reduce(
     (acc, user) => acc + user.files.reduce((fAcc, f) => fAcc + f.size, 0),
     0
   );
-  const totalTransferredBytes = activeSession.users.reduce(
+  const totalTransferredBytes = activeSession!.users.reduce(
     (acc, user) =>
       acc + user.files.reduce((fAcc, f) => fAcc + f.transferred, 0),
     0
@@ -62,14 +138,14 @@ export function TransferStatus() {
     ? `Sharing to ${totalUsers} users`
     : isMultiFile
       ? `${totalFiles} files`
-      : activeSession.users[0].files[0].name;
+      : activeSession!.users[0].files[0].name;
 
   const subtitle = isMultiUser
     ? `${totalFiles} files total`
     : isMultiFile
-      ? activeSession.users[0].deviceName
-      : activeSession.users[0].deviceName.toUpperCase() +
-        ` (${activeSession.users[0].name})`;
+      ? activeSession!.users[0].deviceName
+      : activeSession!.users[0].deviceName.toUpperCase() +
+        ` (${activeSession!.users[0].name})`;
 
   return (
     <Animated.View
@@ -146,7 +222,7 @@ export function TransferStatus() {
             style={styles.expandedContent}
           >
             {isMultiUser
-              ? activeSession.users.map((user) => (
+              ? activeSession!.users.map((user) => (
                   <UserProgressItem
                     key={user.id}
                     user={user}
@@ -156,7 +232,7 @@ export function TransferStatus() {
                   />
                 ))
               : isMultiFile
-                ? activeSession.users[0].files.map((file) => (
+                ? activeSession!.users[0].files.map((file) => (
                     <FileProgressItem
                       key={file.id}
                       file={file}
@@ -395,5 +471,22 @@ const styles = StyleSheet.create({
   cancelText: {
     fontFamily: Fonts.sans.bold,
     fontSize: 10,
+  },
+  requestFooter: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
+    marginTop: 4,
+  },
+  actionButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    minWidth: 90,
+    alignItems: 'center',
+  },
+  actionButtonText: {
+    fontFamily: Fonts.sans.bold,
+    fontSize: 11,
   },
 });

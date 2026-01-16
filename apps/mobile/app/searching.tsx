@@ -163,7 +163,7 @@ export default function SearchingScreen() {
   const [isModalVisible, setIsModalVisible] = React.useState(false);
   const colorScheme = useColorScheme() ?? 'light';
   const themeColors = Colors[colorScheme];
-  const { startSession } = useTransfer();
+  const { startSession, receiveRequest } = useTransfer();
   const {
     peers,
     startDiscovery,
@@ -282,6 +282,17 @@ export default function SearchingScreen() {
             },
           ],
         },
+      ],
+    });
+  };
+  const mockReceiveRequest = () => {
+    receiveRequest({
+      id: 'req-1',
+      senderName: 'John',
+      senderDeviceName: 'Pixel 8 Pro',
+      files: [
+        { id: 'f-1', name: 'vacation_photo.jpg', size: 2.5 * 1024 * 1024 },
+        { id: 'f-2', name: 'notes.txt', size: 12 * 1024 },
       ],
     });
   };
@@ -431,6 +442,12 @@ export default function SearchingScreen() {
             onPress={mockMultiFileTransfer}
           >
             <Text style={styles.testButtonText}>Multi File</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.testButton, { backgroundColor: '#007AFF' }]}
+            onPress={mockReceiveRequest}
+          >
+            <Text style={styles.testButtonText}>Req</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

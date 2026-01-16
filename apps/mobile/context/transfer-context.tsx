@@ -24,9 +24,19 @@ export interface TransferSession {
   status: TransferStatus;
 }
 
+export interface TransferRequest {
+  id: string;
+  senderName: string;
+  senderDeviceName: string;
+  files: { id: string; name: string; size: number }[];
+}
+
 interface TransferContextType {
   activeSession: TransferSession | null;
+  pendingRequest: TransferRequest | null;
   startSession: (session: TransferSession) => void;
+  receiveRequest: (request: TransferRequest) => void;
+  respondToRequest: (accept: boolean) => void;
   updateFileProgress: (
     userId: string,
     fileId: string,
@@ -44,10 +54,30 @@ export function TransferProvider({ children }: { children: React.ReactNode }) {
   const [activeSession, setActiveSession] = useState<TransferSession | null>(
     null
   );
+  const [pendingRequest, setPendingRequest] = useState<TransferRequest | null>(
+    null
+  );
 
   const startSession = useCallback((session: TransferSession) => {
     setActiveSession(session);
+    setPendingRequest(null);
   }, []);
+
+  const receiveRequest = useCallback((request: TransferRequest) => {
+    setPendingRequest(request);
+  }, []);
+
+  const respondToRequest = useCallback(
+    (accept: boolean) => {
+      if (accept && pendingRequest) {
+        // In a real app, this would trigger the backend to start receiving
+        // For now, we'll just mock starting a session if we were to implement that logic here
+        // startSession(...)
+      }
+      setPendingRequest(null);
+    },
+    [pendingRequest]
+  );
 
   const updateFileProgress = useCallback(
     (userId: string, fileId: string, transferred: number) => {
@@ -86,7 +116,10 @@ export function TransferProvider({ children }: { children: React.ReactNode }) {
     <TransferContext.Provider
       value={{
         activeSession,
+        pendingRequest,
         startSession,
+        receiveRequest,
+        respondToRequest,
         updateFileProgress,
         cancelSession,
         completeSession,
