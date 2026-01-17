@@ -51,6 +51,12 @@
       <key>NSAllowsLocalNetworking</key>
       <true/>
     </dict>
+    <key>NSBonjourServices</key>
+    <array>
+      <string>_crossshare._tcp</string>
+    </array>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Crossshare needs local network access to discover nearby devices for file sharing.</string>
     <key>NSUserActivityTypes</key>
     <array>
       <string>$(PRODUCT_BUNDLE_IDENTIFIER).expo.index_route</string>

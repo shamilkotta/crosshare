@@ -31,6 +31,7 @@
   "license": "MIT",
   "dependencies": {},
   "devDependencies": {
+    "@expo/config-plugins": "~9.0.0",
     "@types/react": "~19.1.0",
     "expo-module-scripts": "^5.0.8",
     "expo": "^54.0.27",

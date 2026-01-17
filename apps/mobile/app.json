@@ -40,6 +40,12 @@
             "backgroundColor": "#000000"
           }
         }
+      ],
+      [
+        "@crossshare/lan",
+        {
+          "localNetworkPermission": "Crossshare needs local network access to discover nearby devices for file sharing."
+        }
       ]
     ],
     "experiments": {
