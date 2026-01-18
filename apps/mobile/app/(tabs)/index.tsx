@@ -4,8 +4,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Modal,
-  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -14,48 +12,28 @@ import { PlusAnimatedCircles } from '@/components/plus-animated-circles';
 import { SegmentedControl } from '@/components/segmented-control';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors, Fonts } from '@/constants/theme';
-import { useTheme } from '@/context/theme-context';
+import { useLan } from '@/context/lan-context';
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const themeColors = Colors[colorScheme];
-  const { themeMode, setThemeMode } = useTheme();
-  const [isThemeModalVisible, setThemeModalVisible] = useState(false);
   const [sharingMode, setSharingMode] = useState('EVERYONE');
   const router = useRouter();
+  const { startAdvertising, stopAdvertising } = useLan();
 
-  const ThemeOption = ({
-    mode,
-    label,
-  }: {
-    mode: 'light' | 'dark' | 'system';
-    label: string;
-  }) => (
-    <TouchableOpacity
-      style={[
-        styles.themeOption,
-        themeMode === mode && styles.activeThemeOption,
-      ]}
-      onPress={() => {
-        setThemeMode(mode);
-        setThemeModalVisible(false);
-      }}
-    >
-      <Text
-        style={[
-          styles.themeOptionText,
-          {
-            color: themeColors.text,
-            fontFamily:
-              themeMode === mode ? Fonts.sans.bold : Fonts.sans.regular,
-          },
-        ]}
-      >
-        {label}
-      </Text>
-      {themeMode === mode && <View style={styles.activeCheck} />}
-    </TouchableOpacity>
-  );
+  // Handle sharing mode toggle and advertising
+  const handleSharingModeChange = async (mode: string) => {
+    setSharingMode(mode);
+    
+    if (mode === 'CONTACTS' || mode === 'EVERYONE') {
+      // Start advertising when CONTACTS or EVERYONE is selected
+      // Port and device name are automatically configured from the context and native side
+      await startAdvertising();
+    } else if (mode === 'OFF') {
+      // Stop advertising when OFF is selected
+      await stopAdvertising();
+    }
+  };
 
   return (
     <View
@@ -127,22 +105,12 @@ export default function HomeScreen() {
           <SegmentedControl
             options={['OFF', 'CONTACTS', 'EVERYONE']}
             selectedOption={sharingMode}
-            onSelect={setSharingMode}
+            onSelect={handleSharingModeChange}
           />
           <Text style={[styles.readyText, { color: themeColors.subtleText }]}>
             READY TO TRANSFER
           </Text>
         </View>
-
-        {/* Bottom Navigation / Indicators */}
-        {/* <View style={styles.footer}>
-          <View style={styles.pagination}>
-            <View style={[styles.dot, { backgroundColor: themeColors.text }]} />
-            <View style={[styles.dot, { backgroundColor: themeColors.border }]} />
-            <View style={[styles.dot, { backgroundColor: themeColors.border }]} />
-          </View>
-          <Text style={[styles.stepText, { color: themeColors.subtleText }]}>STEP 1 OF 3</Text>
-        </View> */}
       </SafeAreaView>
     </View>
   );

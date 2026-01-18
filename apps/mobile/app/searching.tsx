@@ -168,21 +168,17 @@ export default function SearchingScreen() {
     peers,
     startDiscovery,
     stopDiscovery,
-    startAdvertising,
-    stopAdvertising,
   } = useLan();
 
   useEffect(() => {
-    // Start discovery and advertising when screen mounts
+    // Start discovery when screen mounts (advertising is handled on home screen)
     startDiscovery();
-    // For now using a default port, this should ideally come from a server/service
-    startAdvertising('My iPhone', 8080);
 
     return () => {
       stopDiscovery();
-      stopAdvertising();
+      // Don't stop advertising here - it's managed on the home screen
     };
-  }, [startDiscovery, stopDiscovery, startAdvertising, stopAdvertising]);
+  }, [startDiscovery, stopDiscovery]);
 
   // Map LanPeer to the format expected by the UI components if needed
   const devices = peers.map((peer) => ({

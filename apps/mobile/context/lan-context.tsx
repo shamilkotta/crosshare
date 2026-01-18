@@ -5,7 +5,7 @@ import React, {
   useCallback,
   useEffect,
 } from 'react';
-import CrossshareLan, { LanPeer, LanError } from '@crossshare/lan';
+import CrossshareLan, { LanPeer, LanError, StartAdvertisingOptions } from '@crossshare/lan';
 
 interface LanContextType {
   peers: LanPeer[];
@@ -14,7 +14,7 @@ interface LanContextType {
   error: LanError | null;
   startDiscovery: () => Promise<void>;
   stopDiscovery: () => Promise<void>;
-  startAdvertising: (serviceName: string, port: number) => Promise<void>;
+  startAdvertising: () => Promise<void>;
   stopAdvertising: () => Promise<void>;
 }
 
@@ -40,8 +40,8 @@ export function LanProvider({ children }: { children: React.ReactNode }) {
 
     const peerLostSub = CrossshareLan.addListener(
       'onPeerLost',
-      (peerId: string) => {
-        setPeers((prev) => prev.filter((p) => p.id !== peerId));
+      (event: { peerId: string }) => {
+        setPeers((prev) => prev.filter((p) => p.id !== event.peerId));
       }
     );
 
@@ -79,9 +79,11 @@ export function LanProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const startAdvertising = useCallback(
-    async (serviceName: string, port: number) => {
+    async () => {
       try {
-        await CrossshareLan.startAdvertising({ serviceName, port });
+        // Default port, this should ideally come from a server/service
+        const port = 8080;
+        await CrossshareLan.startAdvertising({ port } as StartAdvertisingOptions);
         setIsAdvertisingActive(true);
         setError(null);
       } catch (err: any) {
