@@ -4,6 +4,7 @@ import {
   LanPeer,
   LanEvents,
   StartAdvertisingOptions,
+  DeviceInfo,
 } from './CrossshareLan.types';
 
 declare class CrossshareLanModule extends NativeModule<LanEvents> {
@@ -34,6 +35,12 @@ declare class CrossshareLanModule extends NativeModule<LanEvents> {
    * @returns Array of discovered peers
    */
   getDiscoveredPeers(): Promise<LanPeer[]>;
+
+  /**
+   * Get device information (id and name)
+   * @returns Device info with unique id and human-readable name
+   */
+  getDeviceInfo(): Promise<DeviceInfo>;
 }
 
 // This call loads the native module object from the JSI.

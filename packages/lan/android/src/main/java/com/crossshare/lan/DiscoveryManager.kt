@@ -158,17 +158,20 @@ class DiscoveryManager(
                 
                 val peerId = attributes["id"] ?: serviceId
                 val platform = attributes["platform"] ?: "android"
+                // Use deviceName from TXT record, fallback to service name
+                val deviceName = attributes["deviceName"] ?: serviceInfo.serviceName
                 
                 // Remove standard keys from meta
                 val meta = attributes.toMutableMap().apply {
                     remove("id")
                     remove("platform")
                     remove("version")
+                    remove("deviceName")
                 }
                 
                 val peer = LanPeer(
                     id = peerId,
-                    name = serviceInfo.serviceName,
+                    name = deviceName,
                     host = host,
                     port = port,
                     platform = platform,

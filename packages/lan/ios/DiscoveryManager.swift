@@ -152,16 +152,19 @@ extension DiscoveryManager: NetServiceDelegate {
         // Extract metadata
         let peerId = txtRecord["id"] ?? id
         let platform = txtRecord["platform"] ?? "ios"
+        // Use deviceName from TXT record, fallback to service name
+        let deviceName = txtRecord["deviceName"] ?? sender.name
         
         // Remove standard keys from meta
         var meta = txtRecord
         meta.removeValue(forKey: "id")
         meta.removeValue(forKey: "platform")
         meta.removeValue(forKey: "version")
+        meta.removeValue(forKey: "deviceName")
         
         let peer = LanPeer(
             id: peerId,
-            name: sender.name,
+            name: deviceName,
             host: host,
             port: sender.port,
             platform: platform,

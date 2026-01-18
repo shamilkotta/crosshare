@@ -1,4 +1,4 @@
-import { LanPeer, StartAdvertisingOptions } from './CrossshareLan.types';
+import { LanPeer, StartAdvertisingOptions, DeviceInfo } from './CrossshareLan.types';
 
 /**
  * Web stub for CrossshareLan module
@@ -23,6 +23,10 @@ export default {
 
   async getDiscoveredPeers(): Promise<LanPeer[]> {
     return [];
+  },
+
+  async getDeviceInfo(): Promise<DeviceInfo> {
+    return { id: 'web-device', name: 'Web Browser' };
   },
 
   addListener(_eventName: string, _listener: (...args: any[]) => void) {

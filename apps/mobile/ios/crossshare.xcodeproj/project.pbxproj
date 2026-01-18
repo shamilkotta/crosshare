@@ -7,12 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		10AE28C425447ECD3AAA9CA1 /* libPods-crossshare.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5115DF7822F417F8D8E9050D /* libPods-crossshare.a */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		7C20703018433642E140C4CE /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B58B793EEB10288FF60CA68 /* ExpoModulesProvider.swift */; };
-		A84611599CB11E5418827E16 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 2061DC27C063B36B9A2AE694 /* PrivacyInfo.xcprivacy */; };
+		6CD5CACFD69E05B505F96A5B /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 1F07E01BAC2BEC053D8D7AC0 /* PrivacyInfo.xcprivacy */; };
+		A0919EE2BD1E44BA0F8D75D6 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2756451D85EA61239FE5914A /* ExpoModulesProvider.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
+		E89E40DCDD9B66CCDBD39952 /* libPods-crossshare.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6A71D15633EB7C2D93AB5970 /* libPods-crossshare.a */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
@@ -20,16 +20,16 @@
 		13B07F961A680F5B00A75B9A /* crossshare.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = crossshare.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = crossshare/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = crossshare/Info.plist; sourceTree = "<group>"; };
-		2061DC27C063B36B9A2AE694 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = crossshare/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		3F1D9E12F01B3FDCC1045672 /* Pods-crossshare.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-crossshare.release.xcconfig"; path = "Target Support Files/Pods-crossshare/Pods-crossshare.release.xcconfig"; sourceTree = "<group>"; };
-		5115DF7822F417F8D8E9050D /* libPods-crossshare.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-crossshare.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		5B58B793EEB10288FF60CA68 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-crossshare/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		1F07E01BAC2BEC053D8D7AC0 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = crossshare/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		2756451D85EA61239FE5914A /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-crossshare/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		4030E347B27C7F832F52A0AF /* Pods-crossshare.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-crossshare.release.xcconfig"; path = "Target Support Files/Pods-crossshare/Pods-crossshare.release.xcconfig"; sourceTree = "<group>"; };
+		6A71D15633EB7C2D93AB5970 /* libPods-crossshare.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-crossshare.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = crossshare/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
+		C9C985BA5AB758F0B2BA5356 /* Pods-crossshare.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-crossshare.debug.xcconfig"; path = "Target Support Files/Pods-crossshare/Pods-crossshare.debug.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = crossshare/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* crossshare-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "crossshare-Bridging-Header.h"; path = "crossshare/crossshare-Bridging-Header.h"; sourceTree = "<group>"; };
-		FF047ECA6F710E978DB72ACD /* Pods-crossshare.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-crossshare.debug.xcconfig"; path = "Target Support Files/Pods-crossshare/Pods-crossshare.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -37,21 +37,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				10AE28C425447ECD3AAA9CA1 /* libPods-crossshare.a in Frameworks */,
+				E89E40DCDD9B66CCDBD39952 /* libPods-crossshare.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		0CB8FE808CDA33006BCBC560 /* crossshare */ = {
-			isa = PBXGroup;
-			children = (
-				5B58B793EEB10288FF60CA68 /* ExpoModulesProvider.swift */,
-			);
-			name = crossshare;
-			sourceTree = "<group>";
-		};
 		13B07FAE1A68108700A75B9A /* crossshare */ = {
 			isa = PBXGroup;
 			children = (
@@ -61,18 +53,36 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				2061DC27C063B36B9A2AE694 /* PrivacyInfo.xcprivacy */,
+				1F07E01BAC2BEC053D8D7AC0 /* PrivacyInfo.xcprivacy */,
 			);
 			name = crossshare;
+			sourceTree = "<group>";
+		};
+		261EA1F870472904DD0B5215 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				C9C985BA5AB758F0B2BA5356 /* Pods-crossshare.debug.xcconfig */,
+				4030E347B27C7F832F52A0AF /* Pods-crossshare.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				5115DF7822F417F8D8E9050D /* libPods-crossshare.a */,
+				6A71D15633EB7C2D93AB5970 /* libPods-crossshare.a */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		3CDA4BFFB203E0945847084F /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				E37AD0DC8A5497E03F7E647A /* crossshare */,
+			);
+			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -89,8 +99,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				A247862F16FDD2BB72A85EE0 /* Pods */,
-				86CD46E3051B4C2C694B2617 /* ExpoModulesProviders */,
+				261EA1F870472904DD0B5215 /* Pods */,
+				3CDA4BFFB203E0945847084F /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -105,24 +115,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		86CD46E3051B4C2C694B2617 /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				0CB8FE808CDA33006BCBC560 /* crossshare */,
-			);
-			name = ExpoModulesProviders;
-			sourceTree = "<group>";
-		};
-		A247862F16FDD2BB72A85EE0 /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				FF047ECA6F710E978DB72ACD /* Pods-crossshare.debug.xcconfig */,
-				3F1D9E12F01B3FDCC1045672 /* Pods-crossshare.release.xcconfig */,
-			);
-			name = Pods;
-			path = Pods;
-			sourceTree = "<group>";
-		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
 			isa = PBXGroup;
 			children = (
@@ -130,6 +122,14 @@
 			);
 			name = Supporting;
 			path = crossshare/Supporting;
+			sourceTree = "<group>";
+		};
+		E37AD0DC8A5497E03F7E647A /* crossshare */ = {
+			isa = PBXGroup;
+			children = (
+				2756451D85EA61239FE5914A /* ExpoModulesProvider.swift */,
+			);
+			name = crossshare;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -140,13 +140,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "crossshare" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				86D37210BEA46652DA7C1B6E /* [Expo] Configure project */,
+				8BF13D08EDE8ED2054D215D9 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				3D1110E9E9A7309919A4272E /* [CP] Embed Pods Frameworks */,
+				0D85BC9398AC45ADDC87FD02 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -196,7 +196,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				A84611599CB11E5418827E16 /* PrivacyInfo.xcprivacy in Resources */,
+				6CD5CACFD69E05B505F96A5B /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -242,7 +242,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		3D1110E9E9A7309919A4272E /* [CP] Embed Pods Frameworks */ = {
+		0D85BC9398AC45ADDC87FD02 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -298,7 +298,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-crossshare/Pods-crossshare-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		86D37210BEA46652DA7C1B6E /* [Expo] Configure project */ = {
+		8BF13D08EDE8ED2054D215D9 /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -330,7 +330,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				7C20703018433642E140C4CE /* ExpoModulesProvider.swift in Sources */,
+				A0919EE2BD1E44BA0F8D75D6 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -339,7 +339,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = FF047ECA6F710E978DB72ACD /* Pods-crossshare.debug.xcconfig */;
+			baseConfigurationReference = C9C985BA5AB758F0B2BA5356 /* Pods-crossshare.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -375,7 +375,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 3F1D9E12F01B3FDCC1045672 /* Pods-crossshare.release.xcconfig */;
+			baseConfigurationReference = 4030E347B27C7F832F52A0AF /* Pods-crossshare.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;

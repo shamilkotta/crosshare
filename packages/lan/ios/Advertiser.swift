@@ -49,9 +49,10 @@ class Advertiser: NSObject {
         // Build TXT record
         var txtDict: [String: Data] = [:]
         
-        // Add standard fields
-        let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
-        txtDict["id"] = deviceId.data(using: .utf8) ?? Data()
+        // Add standard fields using DeviceInfo
+        let deviceInfo = DeviceInfo.getDeviceInfo()
+        txtDict["id"] = deviceInfo.id.data(using: .utf8) ?? Data()
+        txtDict["deviceName"] = deviceInfo.name.data(using: .utf8) ?? Data()
         txtDict["platform"] = "ios".data(using: .utf8) ?? Data()
         txtDict["version"] = "1".data(using: .utf8) ?? Data()
         

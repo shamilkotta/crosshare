@@ -17,11 +17,16 @@ class CrossshareLanModule : Module() {
 
         // Start advertising this device on the network
         AsyncFunction("startAdvertising") { options: Map<String, Any?> ->
-            val serviceName = options["serviceName"] as? String
-                ?: throw IllegalArgumentException("serviceName is required")
-            
             val port = (options["port"] as? Number)?.toInt()
                 ?: throw IllegalArgumentException("port is required")
+            
+            // Use provided serviceName or get device name from native
+            val serviceName = options["serviceName"] as? String
+                ?: run {
+                    val context = appContext.reactContext
+                        ?: throw IllegalStateException("React context not available")
+                    DeviceInfoHelper.getDeviceName(context)
+                }
             
             @Suppress("UNCHECKED_CAST")
             val meta = options["meta"] as? Map<String, String>
@@ -47,6 +52,17 @@ class CrossshareLanModule : Module() {
         // Get currently discovered peers
         AsyncFunction("getDiscoveredPeers") {
             discoveryManager?.getDiscoveredPeers()?.map { it.toMap() } ?: emptyList<Map<String, Any?>>()
+        }
+
+        // Get device info (id and name)
+        AsyncFunction("getDeviceInfo") {
+            val context = appContext.reactContext 
+                ?: throw IllegalStateException("React context not available")
+            val deviceInfo = DeviceInfoHelper.getDeviceInfo(context)
+            mapOf(
+                "id" to deviceInfo.id,
+                "name" to deviceInfo.name
+            )
         }
 
         // Cleanup when module is destroyed

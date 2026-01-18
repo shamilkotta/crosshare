@@ -3,9 +3,6 @@ package com.crossshare.lan
 import android.content.Context
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
-import android.os.Build
-import android.provider.Settings
-import java.util.UUID
 
 /**
  * Listener interface for advertiser events
@@ -51,8 +48,10 @@ class Advertiser(
             setPort(port)
             
             // Add TXT records
-            val deviceId = getDeviceId()
+            val deviceId = DeviceInfoHelper.getDeviceId(context)
+            val deviceName = DeviceInfoHelper.getDeviceName(context)
             setAttribute("id", deviceId)
+            setAttribute("deviceName", deviceName)
             setAttribute("platform", "android")
             setAttribute("version", "1")
             
@@ -107,15 +106,4 @@ class Advertiser(
         isAdvertising = false
     }
 
-    /**
-     * Get a stable device identifier
-     */
-    private fun getDeviceId(): String {
-        return try {
-            Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
-                ?: UUID.randomUUID().toString()
-        } catch (e: Exception) {
-            UUID.randomUUID().toString()
-        }
-    }
 }

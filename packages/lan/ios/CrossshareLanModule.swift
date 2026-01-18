@@ -23,16 +23,18 @@ public class CrossshareLanModule: Module {
         
         // Start advertising this device on the network
         AsyncFunction("startAdvertising") { (options: [String: Any]) in
-            guard let serviceName = options["serviceName"] as? String else {
-                throw NSError(domain: "CrossshareLan", code: 1, userInfo: [
-                    NSLocalizedDescriptionKey: "serviceName is required"
-                ])
-            }
-            
             guard let port = options["port"] as? Int else {
                 throw NSError(domain: "CrossshareLan", code: 2, userInfo: [
                     NSLocalizedDescriptionKey: "port is required"
                 ])
+            }
+            
+            // Use provided serviceName or get device name from native
+            let serviceName: String
+            if let providedName = options["serviceName"] as? String {
+                serviceName = providedName
+            } else {
+                serviceName = DeviceInfo.getDeviceName()
             }
             
             let meta = options["meta"] as? [String: String]
@@ -58,6 +60,11 @@ public class CrossshareLanModule: Module {
         // Get currently discovered peers
         AsyncFunction("getDiscoveredPeers") { () -> [[String: Any]] in
             return self.discoveryManager.getDiscoveredPeers().map { $0.toDictionary() }
+        }
+        
+        // Get device info (id and name)
+        AsyncFunction("getDeviceInfo") { () -> [String: String] in
+            return DeviceInfo.getDeviceInfo().toDictionary()
         }
         
         // Cleanup when module is destroyed

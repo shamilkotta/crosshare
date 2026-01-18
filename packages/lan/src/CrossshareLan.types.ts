@@ -1,4 +1,14 @@
 /**
+ * Represents device information (id and name)
+ */
+export type DeviceInfo = {
+  /** Unique stable identifier for the device */
+  id: string;
+  /** Human-readable device name (user-defined or default) */
+  name: string;
+};
+
+/**
  * Represents a discovered peer on the local network
  */
 export type LanPeer = {
@@ -23,7 +33,7 @@ export type LanEvents = {
   /** Fired when a new peer is discovered */
   onPeerFound: (peer: LanPeer) => void;
   /** Fired when a previously discovered peer is lost */
-  onPeerLost: (peerId: string) => void;
+  onPeerLost: (event: { peerId: string }) => void;
   /** Fired when an error occurs */
   onError: (error: LanError) => void;
 };
@@ -54,8 +64,8 @@ export type LanErrorCode =
  * Options for starting service advertising
  */
 export type StartAdvertisingOptions = {
-  /** Name to advertise (will be combined with device ID) */
-  serviceName: string;
+  /** Name to advertise (will use device name from native if not provided) */
+  serviceName?: string;
   /** Port the service is running on */
   port: number;
   /** Optional metadata to include in TXT records */
