@@ -6,6 +6,7 @@ import {
   DeviceInfo,
   OutgoingFile,
   Peer,
+  SharedItems,
 } from './CrossshareCore.types';
 
 declare class CrossshareCoreModule extends NativeModule<CrossshareEvents> {
@@ -30,6 +31,11 @@ declare class CrossshareCoreModule extends NativeModule<CrossshareEvents> {
   pairWifiAware(mode: 'show' | 'find'): Promise<void>;
   /** Starts sending; progress arrives via onTransferUpdate. Resolves with the transfer id. */
   send(peerId: string, files: OutgoingFile[], text?: string | null): Promise<string>;
+  /**
+   * Takes what another app shared to Crossshare, if anything (each share is returned once).
+   * Call on launch, when the app becomes active, and on onShareReceived.
+   */
+  getSharedItems(): SharedItems | null;
   respond(transferId: string, accept: boolean): void;
   cancel(transferId: string): void;
   /** Opens (Android) or shares (iOS) a received file. */

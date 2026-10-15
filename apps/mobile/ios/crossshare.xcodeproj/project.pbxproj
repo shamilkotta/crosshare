@@ -8,24 +8,44 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		291C683AB3FD4EFBB235D22E /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9F20BBBAE7B4BD2AA28C314 /* ShareViewController.swift */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
 		596015899F4EE250FD205D74 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 9533C5768834C3473E298623 /* PrivacyInfo.xcprivacy */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		C33C6344E04B1C21585429DB /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D5CE34F7C6899403BABDFF4 /* ExpoModulesProvider.swift */; };
+		CBB269181BDF404EB90AFB0E /* CrossshareShare.appex in Copy Files */ = {isa = PBXBuildFile; fileRef = 56E390BBAA3548949F7F02FA /* CrossshareShare.appex */; };
 		EFFBEE57E4156E6F3D958FCF /* libPods-Crossshare.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5E95904CEB26D1A54429FA28 /* libPods-Crossshare.a */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		EBA1D7D537174FB881828293 /* Copy Files */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				CBB269181BDF404EB90AFB0E /* CrossshareShare.appex in Copy Files */,
+			);
+			name = "Copy Files";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		13B07F961A680F5B00A75B9A /* Crossshare.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Crossshare.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Crossshare/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Crossshare/Info.plist; sourceTree = "<group>"; };
+		56E390BBAA3548949F7F02FA /* CrossshareShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = undefined; name = CrossshareShare.appex; path = CrossshareShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		5E95904CEB26D1A54429FA28 /* libPods-Crossshare.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Crossshare.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		7E74010988D64AEE922ADC09 /* CrossshareShare.entitlements */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = CrossshareShare.entitlements; path = CrossshareShare.entitlements; sourceTree = "<group>"; };
 		83993D903D36689B10F7FAD1 /* Pods-Crossshare.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Crossshare.release.xcconfig"; path = "Target Support Files/Pods-Crossshare/Pods-Crossshare.release.xcconfig"; sourceTree = "<group>"; };
 		8D5CE34F7C6899403BABDFF4 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Crossshare/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		9533C5768834C3473E298623 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Crossshare/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Crossshare/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
+		BF724EFFAFD14B41913F8E9F /* Info.plist */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; name = Info.plist; path = Info.plist; sourceTree = "<group>"; };
+		C9F20BBBAE7B4BD2AA28C314 /* ShareViewController.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = ShareViewController.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
 		D7096BED20B378AD80FFCB83 /* Pods-Crossshare.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Crossshare.debug.xcconfig"; path = "Target Support Files/Pods-Crossshare/Pods-Crossshare.debug.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Crossshare/AppDelegate.swift; sourceTree = "<group>"; };
@@ -38,6 +58,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				EFFBEE57E4156E6F3D958FCF /* libPods-Crossshare.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F6AF137EDA6D49AEA3B2ADA0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -83,6 +110,7 @@
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				DAAEB62638B0D40851024611 /* Pods */,
 				898731F1F7D7610D1BEA0BEE /* ExpoModulesProviders */,
+				ABB649D16C1843D8B8FC219B /* CrossshareShare */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -93,6 +121,7 @@
 			isa = PBXGroup;
 			children = (
 				13B07F961A680F5B00A75B9A /* Crossshare.app */,
+				56E390BBAA3548949F7F02FA /* CrossshareShare.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -111,6 +140,17 @@
 				844AFD27EFFBC2AA1943F148 /* Crossshare */,
 			);
 			name = ExpoModulesProviders;
+			sourceTree = "<group>";
+		};
+		ABB649D16C1843D8B8FC219B /* CrossshareShare */ = {
+			isa = PBXGroup;
+			children = (
+				C9F20BBBAE7B4BD2AA28C314 /* ShareViewController.swift */,
+				BF724EFFAFD14B41913F8E9F /* Info.plist */,
+				7E74010988D64AEE922ADC09 /* CrossshareShare.entitlements */,
+			);
+			name = CrossshareShare;
+			path = CrossshareShare;
 			sourceTree = "<group>";
 		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
@@ -144,6 +184,7 @@
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
+				EBA1D7D537174FB881828293 /* Copy Files */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
 				A2C85770248C813E71AE8D10 /* [CP] Embed Pods Frameworks */,
@@ -156,6 +197,23 @@
 			productName = Crossshare;
 			productReference = 13B07F961A680F5B00A75B9A /* Crossshare.app */;
 			productType = "com.apple.product-type.application";
+		};
+		EF314328D1454AD3A173DD06 /* CrossshareShare */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = EBF678B7826441328470531C /* Build configuration list for PBXNativeTarget "CrossshareShare" */;
+			buildPhases = (
+				3DC39D3EC90B4440BCB4DE08 /* Sources */,
+				12BC4955A1034A78A245386D /* Resources */,
+				F6AF137EDA6D49AEA3B2ADA0 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CrossshareShare;
+			productName = CrossshareShare;
+			productReference = 56E390BBAA3548949F7F02FA /* CrossshareShare.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -184,11 +242,19 @@
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* Crossshare */,
+				EF314328D1454AD3A173DD06 /* CrossshareShare */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		12BC4955A1034A78A245386D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		13B07F8E1A680F5B00A75B9A /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -334,9 +400,41 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		3DC39D3EC90B4440BCB4DE08 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				291C683AB3FD4EFBB235D22E /* ShareViewController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		0B5348E8368043B9B8FC93FC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = CrossshareShare/CrossshareShare.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = CrossshareShare/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.shamilkotta.crossshare.share;
+				PRODUCT_NAME = CrossshareShare;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = D7096BED20B378AD80FFCB83 /* Pods-Crossshare.debug.xcconfig */;
@@ -364,7 +462,7 @@
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.shamilkotta.crossshare;
-				PRODUCT_NAME = Crossshare;
+				PRODUCT_NAME = "Crossshare";
 				SWIFT_OBJC_BRIDGING_HEADER = "Crossshare/Crossshare-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -395,13 +493,41 @@
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.shamilkotta.crossshare;
-				PRODUCT_NAME = Crossshare;
+				PRODUCT_NAME = "Crossshare";
 				SWIFT_OBJC_BRIDGING_HEADER = "Crossshare/Crossshare-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
+		};
+		2271BBEA3149497B9B8B24AE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = CrossshareShare/CrossshareShare.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = CrossshareShare/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.shamilkotta.crossshare.share;
+				PRODUCT_NAME = CrossshareShare;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
 		};
 		83CBBA201A601CBA00E9B192 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -538,6 +664,15 @@
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,
 				83CBBA211A601CBA00E9B192 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		EBF678B7826441328470531C /* Build configuration list for PBXNativeTarget "CrossshareShare" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2271BBEA3149497B9B8B24AE /* Debug */,
+				0B5348E8368043B9B8FC93FC /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

@@ -26,6 +26,8 @@ import java.util.UUID
 class CrossshareCoreModule : Module() {
   private var engine: CrossshareEngine? = null
   private var bluetoothReceiver: BroadcastReceiver? = null
+  private var pendingShare: Map<String, Any?>? = null
+  private var handledIntent: Intent? = null
 
   private val context: Context
     get() = appContext.reactContext?.applicationContext ?: throw Exceptions.ReactContextLost()
@@ -35,7 +37,7 @@ class CrossshareCoreModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("CrossshareCore")
 
-    Events("onPeersChanged", "onTransferRequest", "onTransferUpdate", "onBluetoothState")
+    Events("onPeersChanged", "onTransferRequest", "onTransferUpdate", "onBluetoothState", "onShareReceived")
 
     Function("getDeviceInfo") {
       val d = localDevice()
@@ -92,6 +94,16 @@ class CrossshareCoreModule : Module() {
       }
       val chooser = Intent.createChooser(view, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
       (appContext.currentActivity ?: context).startActivity(chooser)
+    }
+
+    /** Files or text another app shared to Crossshare (or opened with it), once. */
+    Function("getSharedItems") {
+      appContext.currentActivity?.intent?.let(::takeShare)
+      pendingShare.also { pendingShare = null }
+    }
+
+    OnNewIntent { intent ->
+      if (takeShare(intent)) sendEvent("onShareReceived", emptyMap<String, Any>())
     }
 
     OnCreate {
@@ -172,6 +184,70 @@ class CrossshareCoreModule : Module() {
 
   private fun hasPermissions(): Boolean = requiredPermissions().all {
     ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+  }
+
+  // Sharing into the app
+
+  /** Reads a share or "open with" intent into pendingShare. Returns true if it held something. */
+  private fun takeShare(intent: Intent): Boolean {
+    if (intent === handledIntent) return false
+    handledIntent = intent
+    // Reopening the app from recents redelivers the original intent.
+    if (intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) return false
+    val uris = when (intent.action) {
+      Intent.ACTION_SEND -> listOfNotNull(intent.streamExtra())
+      Intent.ACTION_SEND_MULTIPLE -> intent.streamListExtra()
+      Intent.ACTION_VIEW -> listOfNotNull(intent.data?.takeIf { it.scheme == "content" || it.scheme == "file" })
+      else -> return false
+    }.ifEmpty { intent.clipUris() }
+    val text = if (intent.action == Intent.ACTION_VIEW) null else intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString()?.trim()
+    val files = uris.map(::sharedFile)
+    if (files.isEmpty() && text.isNullOrEmpty()) return false
+    pendingShare = mapOf("files" to files, "text" to text?.ifEmpty { null })
+    return true
+  }
+
+  @Suppress("DEPRECATION")
+  private fun Intent.streamExtra(): Uri? =
+    if (Build.VERSION.SDK_INT >= 33) getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+    else getParcelableExtra(Intent.EXTRA_STREAM) as? Uri
+
+  @Suppress("DEPRECATION")
+  private fun Intent.streamListExtra(): List<Uri> =
+    if (Build.VERSION.SDK_INT >= 33) getParcelableArrayListExtra(Intent.EXTRA_STREAM, Uri::class.java).orEmpty()
+    else getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM).orEmpty()
+
+  // Text shares also carry a ClipData, but only with text in it.
+  private fun Intent.clipUris(): List<Uri> {
+    val clip = clipData ?: return emptyList()
+    return (0 until clip.itemCount).mapNotNull { clip.getItemAt(it).uri }
+  }
+
+  private fun sharedFile(uri: Uri): Map<String, Any?> {
+    var name: String? = null
+    var size: Long? = null
+    if (uri.scheme == "content") {
+      runCatching {
+        context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE), null, null, null)
+          ?.use { c ->
+            if (c.moveToFirst()) {
+              name = c.getString(0)
+              if (!c.isNull(1)) size = c.getLong(1)
+            }
+          }
+      }
+    } else {
+      uri.path?.let { File(it) }?.let {
+        name = it.name
+        size = it.length()
+      }
+    }
+    return mapOf(
+      "uri" to uri.toString(),
+      "name" to (name ?: uri.lastPathSegment ?: "file"),
+      "mimeType" to runCatching { context.contentResolver.getType(uri) }.getOrNull(),
+      "size" to size?.toDouble(),
+    )
   }
 
   // Conversions

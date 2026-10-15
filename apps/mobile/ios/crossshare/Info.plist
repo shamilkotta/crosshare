@@ -40,6 +40,8 @@
     </array>
     <key>CFBundleVersion</key>
     <string>1</string>
+    <key>CrossshareAppGroup</key>
+    <string>group.com.shamilkotta.crossshare</string>
     <key>CrossshareHotspotJoin</key>
     <true/>
     <key>LSMinimumSystemVersion</key>

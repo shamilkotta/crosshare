@@ -9,6 +9,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors, Fonts } from '@/constants/theme';
 import { useCrossshare } from '@/context/crossshare-context';
 import { SendSourceSheet } from '@/components/send-source-sheet';
+import { useIncomingShare } from '@/hooks/use-incoming-share';
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme() ?? 'light';
@@ -17,6 +18,7 @@ export default function HomeScreen() {
   const { device, visible, setVisible, bluetooth, setSelection } =
     useCrossshare();
   const [pickerVisible, setPickerVisible] = useState(false);
+  useIncomingShare();
 
   const status = !visible
     ? 'RECEIVING IS OFF'

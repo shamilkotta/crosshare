@@ -2,12 +2,23 @@ import AppKit
 import CrossshareKit
 import Foundation
 
+/// Files or text handed to Crossshare by another app, waiting for the user to pick a device.
+struct PendingShare: Equatable {
+  let id = UUID()
+  var files: [URL]
+  var text: String?
+}
+
 final class AppModel: ObservableObject, CrossshareEngineDelegate {
+  static let shared = AppModel()
+
   @Published private(set) var peers: [Peer] = []
   /// Newest first.
   @Published private(set) var transfers: [Transfer] = []
   @Published private(set) var bluetooth = "unknown"
   @Published var deviceName: String
+  /// From Finder's Open With, the Dock icon, or the Share menu.
+  @Published var pending: PendingShare?
   @Published var visible: Bool {
     didSet {
       engine.setVisible(visible)
@@ -22,7 +33,7 @@ final class AppModel: ObservableObject, CrossshareEngineDelegate {
     transfers.filter { $0.direction == .incoming && $0.status == .waiting }.reversed()
   }
 
-  init() {
+  private init() {
     let defaults = UserDefaults.standard
     let id = defaults.string(forKey: "id") ?? {
       let id = UUID().uuidString
@@ -61,6 +72,30 @@ final class AppModel: ObservableObject, CrossshareEngineDelegate {
   func send(text: String, to peer: Peer) {
     do {
       try engine.send(files: [], text: text, to: peer.id)
+    } catch {
+      alert("Could not send", error.localizedDescription)
+    }
+  }
+
+  /// File URLs and crossshare://share?text=… links handed to the app.
+  func receive(_ urls: [URL]) {
+    let files = urls.filter(\.isFileURL)
+    let texts = urls.compactMap { url -> String? in
+      guard url.scheme == "crossshare", url.host == "share" else { return nil }
+      return URLComponents(url: url, resolvingAgainstBaseURL: false)?
+        .queryItems?.first { $0.name == "text" }?.value
+    }
+    guard !files.isEmpty || !texts.isEmpty else { return }
+    pending = PendingShare(files: files, text: texts.isEmpty ? nil : texts.joined(separator: "\n"))
+  }
+
+  func sendPending(to peer: Peer) {
+    guard let share = pending else { return }
+    pending = nil
+    do {
+      let files = try expand(share.files).map { try OutgoingFile(url: $0) }
+      guard !files.isEmpty || share.text != nil else { return }
+      try engine.send(files: files, text: share.text, to: peer.id)
     } catch {
       alert("Could not send", error.localizedDescription)
     }

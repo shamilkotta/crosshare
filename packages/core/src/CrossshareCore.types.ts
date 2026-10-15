@@ -64,12 +64,20 @@ export type OutgoingFile = {
   size?: number;
 };
 
+/** What another app shared to Crossshare (share sheet / "open with"). */
+export type SharedItems = {
+  files: (OutgoingFile & { name: string })[];
+  text?: string;
+};
+
 export type CrossshareEvents = {
   onPeersChanged: (event: { peers: Peer[] }) => void;
   /** An incoming transfer needs respond(). */
   onTransferRequest: (transfer: Transfer) => void;
   onTransferUpdate: (transfer: Transfer) => void;
   onBluetoothState: (event: { state: BluetoothState }) => void;
+  /** Android: a share arrived while the app was running. Call getSharedItems(). */
+  onShareReceived: () => void;
 };
 
 export const isFinalStatus = (s: TransferStatus) =>

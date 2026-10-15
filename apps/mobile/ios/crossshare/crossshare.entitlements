@@ -9,5 +9,9 @@
       <string>Publish</string>
       <string>Subscribe</string>
     </array>
+    <key>com.apple.security.application-groups</key>
+    <array>
+      <string>group.com.shamilkotta.crossshare</string>
+    </array>
   </dict>
 </plist>

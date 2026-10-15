@@ -8,6 +8,8 @@
   <string>Crossshare</string>
   <key>CFBundleIdentifier</key>
   <string>com.shamilkotta.crossshare.mac</string>
+  <key>CFBundleIconFile</key>
+  <string>AppIcon</string>
   <key>CFBundleExecutable</key>
   <string>Crossshare</string>
   <key>CFBundlePackageType</key>
@@ -22,6 +24,34 @@
   <true/>
   <key>NSPrincipalClass</key>
   <string>NSApplication</string>
+  <!-- "Open With › Crossshare" in Finder and dropping files on the Dock icon. Alternate rank: never the default app. -->
+  <key>CFBundleDocumentTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleTypeName</key>
+      <string>Any file</string>
+      <key>CFBundleTypeRole</key>
+      <string>Viewer</string>
+      <key>LSHandlerRank</key>
+      <string>Alternate</string>
+      <key>LSItemContentTypes</key>
+      <array>
+        <string>public.item</string>
+      </array>
+    </dict>
+  </array>
+  <!-- crossshare://share?text=… from the share extension. -->
+  <key>CFBundleURLTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleURLName</key>
+      <string>com.shamilkotta.crossshare.mac</string>
+      <key>CFBundleURLSchemes</key>
+      <array>
+        <string>crossshare</string>
+      </array>
+    </dict>
+  </array>
   <key>NSBluetoothAlwaysUsageDescription</key>
   <string>Crossshare uses Bluetooth to find nearby phones, even without Wi-Fi.</string>
   <key>NSLocalNetworkUsageDescription</key>

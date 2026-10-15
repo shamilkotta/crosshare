@@ -197,6 +197,9 @@ export default function SearchingScreen() {
     return () => setDiscovering(false);
   }, [setDiscovering]);
 
+  // A new share can replace the selection while this screen is open.
+  useEffect(() => setSendingTo(new Set()), [selection]);
+
   const devices = peers.map((peer) => ({
     id: peer.id,
     name: peer.name,

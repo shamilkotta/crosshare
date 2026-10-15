@@ -8,7 +8,7 @@ public class CrossshareCoreModule: Module, CrossshareEngineDelegate {
   public func definition() -> ModuleDefinition {
     Name("CrossshareCore")
 
-    Events("onPeersChanged", "onTransferRequest", "onTransferUpdate", "onBluetoothState")
+    Events("onPeersChanged", "onTransferRequest", "onTransferUpdate", "onBluetoothState", "onShareReceived")
 
     Function("getDeviceInfo") { () -> [String: String] in
       let d = Self.localDevice()
@@ -62,6 +62,9 @@ public class CrossshareCoreModule: Module, CrossshareEngineDelegate {
       return try self.getEngine().send(files: outgoing, text: text, to: peerId)
     }
 
+    /// What the share extension left in the app group, once (see ShareExtension/ShareViewController.swift).
+    Function("getSharedItems") { () -> [String: Any]? in Self.takeSharedItems() }
+
     Function("respond") { (transferId: String, accept: Bool) in
       self.engine?.respond(transferId: transferId, accept: accept)
     }
@@ -107,6 +110,36 @@ public class CrossshareCoreModule: Module, CrossshareEngineDelegate {
     }
     let name = defaults.string(forKey: "crossshare.name") ?? UIDevice.current.name
     return LocalDevice(id: id, name: name, platform: .ios)
+  }
+
+  // MARK: Share extension inbox
+
+  private static func takeSharedItems() -> [String: Any]? {
+    guard let group = Bundle.main.object(forInfoDictionaryKey: "CrossshareAppGroup") as? String,
+          let container = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: group)
+    else { return nil }
+    let inbox = container.appendingPathComponent("Crossshare/Inbox", isDirectory: true)
+    let manifestURL = inbox.appendingPathComponent("share.json")
+    guard let data = try? Data(contentsOf: manifestURL) else { return nil }
+    try? FileManager.default.removeItem(at: manifestURL)
+    guard let manifest = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+    // A share the app never opened for is stale by the time the user comes back.
+    let created = manifest["created"] as? Double ?? 0
+    guard Date().timeIntervalSince1970 - created < 10 * 60 else { return nil }
+
+    let files = (manifest["files"] as? [[String: Any]] ?? []).compactMap { f -> [String: Any]? in
+      guard let path = f["path"] as? String else { return nil }
+      var d: [String: Any] = [
+        "uri": inbox.appendingPathComponent(path).absoluteString,
+        "name": f["name"] as? String ?? (path as NSString).lastPathComponent,
+      ]
+      if let mime = f["mimeType"] as? String { d["mimeType"] = mime }
+      if let size = f["size"] as? Double { d["size"] = size }
+      return d
+    }
+    var result: [String: Any] = ["files": files]
+    if let text = manifest["text"] as? String { result["text"] = text }
+    return result
   }
 
   // MARK: CrossshareEngineDelegate

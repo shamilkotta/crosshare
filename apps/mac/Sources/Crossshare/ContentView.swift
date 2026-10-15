@@ -14,6 +14,7 @@ struct ContentView: View {
       ScrollView {
         VStack(alignment: .leading, spacing: 24) {
           ForEach(model.requests, id: \.id) { RequestBanner(transfer: $0) }
+          if let share = model.pending { PendingBanner(share: share) }
           nearby
           if !model.transfers.isEmpty { transfers }
         }
@@ -74,7 +75,7 @@ struct ContentView: View {
             PeerTile(peer: peer, onSendText: { textTarget = peer })
           }
         }
-        Text("Drop files on a device, or click it to choose files.")
+        Text(model.pending == nil ? "Drop files on a device, or click it to choose files." : "Click a device to send.")
           .font(.caption).foregroundStyle(.secondary)
       }
     }
@@ -113,7 +114,9 @@ struct PeerTile: View {
   }
 
   var body: some View {
-    Button(action: chooseFiles) {
+    Button {
+      if model.pending != nil { model.sendPending(to: peer) } else { chooseFiles() }
+    } label: {
       VStack(spacing: 8) {
         Image(systemName: icon)
           .font(.system(size: 26))
@@ -147,6 +150,34 @@ struct PeerTile: View {
     if panel.runModal() == .OK {
       model.send(urls: panel.urls, to: peer)
     }
+  }
+}
+
+// MARK: - Shared from another app
+
+struct PendingBanner: View {
+  @EnvironmentObject var model: AppModel
+  let share: PendingShare
+
+  var body: some View {
+    HStack(spacing: 12) {
+      Image(systemName: "square.and.arrow.up.fill").font(.title2)
+      VStack(alignment: .leading, spacing: 2) {
+        Text("Choose a device").font(.headline)
+        Text(summary).font(.callout).foregroundStyle(.secondary).lineLimit(2)
+      }
+      Spacer()
+      Button("Cancel") { model.pending = nil }
+    }
+    .padding(14)
+    .background(RoundedRectangle(cornerRadius: 12).fill(Color.accentColor.opacity(0.12)))
+  }
+
+  private var summary: String {
+    let names = share.files.prefix(3).map(\.lastPathComponent).joined(separator: ", ")
+    let more = share.files.count > 3 ? " and \(share.files.count - 3) more" : ""
+    if share.files.isEmpty { return share.text ?? "" }
+    return "\(names)\(more)"
   }
 }
 
