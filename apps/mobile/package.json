@@ -1,5 +1,5 @@
 {
-  "name": "crossshare",
+  "name": "crosshare",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
@@ -13,7 +13,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@crossshare/core": "workspace:*",
+    "@crosshare/core": "workspace:*",
     "@expo/vector-icons": "^15.0.3",
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",

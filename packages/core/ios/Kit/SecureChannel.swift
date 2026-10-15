@@ -42,8 +42,8 @@ final class SecureChannel: @unchecked Sendable {
       shared.hkdfDerivedSymmetricKey(
         using: SHA256.self, salt: salt, sharedInfo: Data(info.utf8), outputByteCount: 32)
     }
-    let i2r = key("crossshare/v1/i2r")
-    let r2i = key("crossshare/v1/r2i")
+    let i2r = key("crosshare/v1/i2r")
+    let r2i = key("crosshare/v1/r2i")
     return SecureChannel(
       stream: stream, sendKey: initiator ? i2r : r2i, recvKey: initiator ? r2i : i2r)
   }

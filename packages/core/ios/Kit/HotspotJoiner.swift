@@ -7,7 +7,7 @@ import NetworkExtension
 /// Requires the `com.apple.developer.networking.HotspotConfiguration` entitlement.
 enum HotspotJoiner {
   static var isSupported: Bool {
-    Bundle.main.object(forInfoDictionaryKey: "CrossshareHotspotJoin") as? Bool ?? false
+    Bundle.main.object(forInfoDictionaryKey: "CrosshareHotspotJoin") as? Bool ?? false
   }
 
   static func join(ssid: String, passphrase: String) async throws {

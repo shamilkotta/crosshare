@@ -1,4 +1,4 @@
-# Crossshare
+# Crosshare
 
 AirDrop-style sharing between Android, iOS and macOS. You don't need a shared Wi-Fi network.
 
@@ -15,22 +15,22 @@ See [docs/PROTOCOL.md](docs/PROTOCOL.md).
 
 ## Sharing from other apps
 
-Crossshare appears in each platform's share menu. Picking it opens Crossshare with the files or
+Crosshare appears in each platform's share menu. Picking it opens Crosshare with the files or
 text selected, on the screen that looks for nearby devices.
 
 - **Android**: the share sheet (one or more files, or text), and "Open with" for any file.
-- **iOS**: a share extension (`CrossshareShare`) in the share sheet. It copies what you shared into
-  the app group `group.<bundle id>`, then opens Crossshare. Both App IDs (`<bundle id>` and
+- **iOS**: a share extension (`CrosshareShare`) in the share sheet. It copies what you shared into
+  the app group `group.<bundle id>`, then opens Crosshare. Both App IDs (`<bundle id>` and
   `<bundle id>.share`) need the **App Groups** capability with that group. To build without it, set
   `{ "share": false }` in the plugin options.
-- **macOS**: Share › Crossshare in Finder, Photos, Safari and other apps; Open With › Crossshare;
+- **macOS**: Share › Crosshare in Finder, Photos, Safari and other apps; Open With › Crosshare;
   or drop files on the Dock icon. `build.sh` turns the share extension on. If it's missing, enable
   it in System Settings › General › Login Items & Extensions › Sharing.
 
 ## Layout
 
 ```
-packages/core      Native engine + Expo module (@crossshare/core)
+packages/core      Native engine + Expo module (@crosshare/core)
   ios/Kit          Swift engine, shared by iOS and macOS
   ios/ShareExtension  iOS share extension (copied into the app by the config plugin)
   ios/cli          cs-cli: Swift test harness
@@ -58,7 +58,7 @@ npx expo run:ios --device
 Use real devices. Simulators and emulators have no usable Bluetooth or AWDL.
 
 iOS joins an Android hotspot through `NEHotspotConfiguration`, which needs the **Hotspot** capability
-on your App ID. If your team can't use it, set `["@crossshare/core", { "hotspot": false }]` in
+on your App ID. If your team can't use it, set `["@crosshare/core", { "hotspot": false }]` in
 `app.json`. iOS↔Android transfers without shared Wi-Fi then stay on Bluetooth, which is slower.
 
 Wi-Fi Aware (iOS 26+) needs the **Wi-Fi Aware** capability, which is only available to paid
@@ -70,18 +70,18 @@ weak-linked, so the app still runs on iOS 15.1–25.
 
 ```sh
 apps/mac/build.sh
-open apps/mac/build/Crossshare.app
+open apps/mac/build/Crosshare.app
 ```
 
-Received files go to `~/Downloads`. On Android they go to `Downloads/Crossshare`; on iOS to
-Files › On My iPhone › Crossshare.
+Received files go to `~/Downloads`. On Android they go to `Downloads/Crosshare`; on iOS to
+Files › On My iPhone › Crosshare.
 
 ## Tests
 
 ```sh
 cd packages/core && swift build          # Swift engine + cs-cli
 cd apps/mobile/android
-CS_CLI=$PWD/../../../packages/core/.build/debug/cs-cli ./gradlew :crossshare-core:testDebugUnitTest
+CS_CLI=$PWD/../../../packages/core/.build/debug/cs-cli ./gradlew :crosshare-core:testDebugUnitTest
 ```
 
 These tests cover Kotlin↔Kotlin and real Kotlin↔Swift transfers in both directions, declines, and

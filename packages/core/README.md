@@ -1,9 +1,9 @@
-# @crossshare/core
+# @crosshare/core
 
-Native discovery and transfer engine for Crossshare, as an Expo module.
+Native discovery and transfer engine for Crosshare, as an Expo module.
 
 - `ios/Kit`: Swift engine shared by the iOS module and the macOS app (`Package.swift`)
-- `ios/CrossshareCoreModule.swift`: Expo bridge for iOS
+- `ios/CrosshareCoreModule.swift`: Expo bridge for iOS
 - `android/.../protocol`: Kotlin protocol (plain JVM, unit-tested)
 - `android/.../core`: Android transports and the Expo bridge
 - `src`: TypeScript API
@@ -22,5 +22,5 @@ The Android unit tests run the Kotlin engine against itself and against `cs-cli`
 
 ```sh
 cd apps/mobile/android
-CS_CLI=$PWD/../../../packages/core/.build/debug/cs-cli ./gradlew :crossshare-core:testDebugUnitTest
+CS_CLI=$PWD/../../../packages/core/.build/debug/cs-cli ./gradlew :crosshare-core:testDebugUnitTest
 ```

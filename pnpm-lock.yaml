@@ -14,7 +14,7 @@ importers:
 
   apps/mobile:
     dependencies:
-      '@crossshare/core':
+      '@crosshare/core':
         specifier: workspace:*
         version: link:../../packages/core
       '@expo/vector-icons':

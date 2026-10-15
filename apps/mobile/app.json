@@ -1,16 +1,16 @@
 {
   "expo": {
-    "name": "Crossshare",
-    "slug": "crossshare",
+    "name": "Crosshare",
+    "slug": "crosshare",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "crossshare",
+    "scheme": "crosshare",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.shamilkotta.crossshare"
+      "bundleIdentifier": "com.shudio.crosshare"
     },
     "android": {
       "adaptiveIcon": {
@@ -21,7 +21,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.shamilkotta.crossshare"
+      "package": "com.shudio.crosshare"
     },
     "web": {
       "output": "static",
@@ -39,7 +39,7 @@
         }
       ],
       [
-        "@crossshare/core",
+        "@crosshare/core",
         {}
       ]
     ],

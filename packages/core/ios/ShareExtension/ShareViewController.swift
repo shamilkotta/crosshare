@@ -1,12 +1,12 @@
 import UIKit
 import UniformTypeIdentifiers
 
-/// Share extension: copies what the user shared into the app group, then opens Crossshare, which
-/// picks it up (CrossshareCoreModule.getSharedItems) and shows nearby devices.
+/// Share extension: copies what the user shared into the app group, then opens Crosshare, which
+/// picks it up (CrosshareCoreModule.getSharedItems) and shows nearby devices.
 ///
 /// Inbox layout, in the app group container:
-///   Crossshare/Inbox/share.json   {"created": <unix s>, "files": [{"path","name","mimeType","size"}], "text"?}
-///   Crossshare/Inbox/<uuid>/...   the copied files ("path" is relative to Inbox/)
+///   Crosshare/Inbox/share.json   {"created": <unix s>, "files": [{"path","name","mimeType","size"}], "text"?}
+///   Crosshare/Inbox/<uuid>/...   the copied files ("path" is relative to Inbox/)
 @objc(ShareViewController)
 final class ShareViewController: UIViewController {
   private let spinner = UIActivityIndicatorView(style: .large)
@@ -50,11 +50,11 @@ final class ShareViewController: UIViewController {
   }
 
   private func collect() async throws {
-    guard let group = Bundle.main.object(forInfoDictionaryKey: "CrossshareAppGroup") as? String,
+    guard let group = Bundle.main.object(forInfoDictionaryKey: "CrosshareAppGroup") as? String,
           let container = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: group)
     else { throw ShareError.noAppGroup }
 
-    let inbox = container.appendingPathComponent("Crossshare/Inbox", isDirectory: true)
+    let inbox = container.appendingPathComponent("Crosshare/Inbox", isDirectory: true)
     // Only the latest share matters; drop anything left from earlier ones.
     try? FileManager.default.removeItem(at: inbox)
     let batch = UUID().uuidString
@@ -143,7 +143,7 @@ final class ShareViewController: UIViewController {
 
   /// Extensions can't call UIApplication.shared, but the app is still in the responder chain.
   private func openApp() {
-    guard let scheme = Bundle.main.object(forInfoDictionaryKey: "CrossshareHostScheme") as? String,
+    guard let scheme = Bundle.main.object(forInfoDictionaryKey: "CrosshareHostScheme") as? String,
           let url = URL(string: "\(scheme)://share") else { return }
     let selector = NSSelectorFromString("openURL:options:completionHandler:")
     var responder: UIResponder? = self
@@ -164,8 +164,8 @@ final class ShareViewController: UIViewController {
 
     var errorDescription: String? {
       switch self {
-      case .noAppGroup: return "Crossshare's app group is not set up."
-      case .nothingToShare: return "Nothing Crossshare can send."
+      case .noAppGroup: return "Crosshare's app group is not set up."
+      case .nothingToShare: return "Nothing Crosshare can send."
       }
     }
   }

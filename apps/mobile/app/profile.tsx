@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import Crossshare from '@crossshare/core';
+import Crosshare from '@crosshare/core';
 import {
   StyleSheet,
   View,
@@ -18,7 +18,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, Fonts } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/context/theme-context';
-import { formatSize, useCrossshare } from '@/context/crossshare-context';
+import { formatSize, useCrosshare } from '@/context/crosshare-context';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -26,7 +26,7 @@ export default function ProfileScreen() {
   const themeColors = Colors[colorScheme];
   const { themeMode, setThemeMode } = useTheme();
   const [isThemeModalVisible, setThemeModalVisible] = useState(false);
-  const { device, rename, history, clearHistory, bluetooth } = useCrossshare();
+  const { device, rename, history, clearHistory, bluetooth } = useCrosshare();
   const [editing, setEditing] = useState(false);
   const [draftName, setDraftName] = useState(device.name);
 
@@ -35,10 +35,10 @@ export default function ProfileScreen() {
     (acc, h) => acc + h.files.reduce((a, f) => a + f.size, 0),
     0
   );
-  const wifiAware = useMemo(() => Crossshare.isWifiAwareSupported(), []);
+  const wifiAware = useMemo(() => Crosshare.isWifiAwareSupported(), []);
   const pair = async (mode: 'show' | 'find') => {
     try {
-      await Crossshare.pairWifiAware(mode);
+      await Crosshare.pairWifiAware(mode);
     } catch (e: any) {
       Alert.alert('Pairing failed', e?.message ?? String(e));
     }
@@ -251,8 +251,8 @@ export default function ProfileScreen() {
 
           <Text style={[styles.note, { color: themeColors.mutedText }]}>
             {Platform.OS === 'ios'
-              ? 'Received files are saved in Files › On My iPhone › Crossshare.'
-              : 'Received files are saved in Downloads › Crossshare.'}
+              ? 'Received files are saved in Files › On My iPhone › Crosshare.'
+              : 'Received files are saved in Downloads › Crosshare.'}
           </Text>
 
           <TouchableOpacity

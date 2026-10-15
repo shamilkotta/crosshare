@@ -2,16 +2,16 @@
 import PackageDescription
 
 let package = Package(
-  name: "CrossshareMac",
+  name: "CrosshareMac",
   platforms: [.macOS(.v13)],
   dependencies: [
     .package(path: "../../packages/core")
   ],
   targets: [
     .executableTarget(
-      name: "Crossshare",
-      dependencies: [.product(name: "CrossshareKit", package: "core")],
-      path: "Sources/Crossshare"
+      name: "Crosshare",
+      dependencies: [.product(name: "CrosshareKit", package: "core")],
+      path: "Sources/Crosshare"
     )
   ]
 )

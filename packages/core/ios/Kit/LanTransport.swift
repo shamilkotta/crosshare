@@ -12,7 +12,7 @@ final class LanTransport: @unchecked Sendable {
   }
 
   private var local: LocalDevice
-  private let queue = DispatchQueue(label: "crossshare.lan")
+  private let queue = DispatchQueue(label: "crosshare.lan")
   private var listener: NWListener?
   private var browser: NWBrowser?
 

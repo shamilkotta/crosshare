@@ -1,6 +1,6 @@
-# Crossshare protocol v1
+# Crosshare protocol v1
 
-Every Crossshare implementation (Swift for iOS/macOS, Kotlin for Android) speaks
+Every Crosshare implementation (Swift for iOS/macOS, Kotlin for Android) speaks
 this protocol. It runs over any reliable byte stream, which today means TCP
 (LAN, Apple AWDL, Android hotspot) or a Bluetooth LE L2CAP channel.
 
@@ -8,7 +8,7 @@ this protocol. It runs over any reliable byte stream, which today means TCP
 
 ### Bonjour / mDNS (same network, and Apple↔Apple peer-to-peer over AWDL)
 
-- Service type: `_crossshare._tcp`
+- Service type: `_crosshare._tcp`
 - Service name: the device id
 - TXT record: `id`, `name`, `platform` (`ios` | `android` | `macos`), `v` (`1`)
 
@@ -17,15 +17,15 @@ devices find each other with no shared network.
 
 ### Wi-Fi Aware (iOS 26+, paired devices)
 
-- Service: `_crossshare._tcp`, declared as both `Publishable` and `Subscribable` under
+- Service: `_crosshare._tcp`, declared as both `Publishable` and `Subscribable` under
   `WiFiAwareServices` in Info.plist. Needs the `com.apple.developer.wifi-aware` entitlement
   (`Publish`, `Subscribe`).
 - Devices pair once through system UI: one shows a code (`DevicePairingView`), the other picks it
   and enters the code (`DevicePicker`). After that, a visible device publishes to all paired
   devices and a discovering device subscribes to them. Connections are plain TCP carrying this
   protocol.
-- A browse result only identifies the paired device, not the Crossshare id. The first hello on a
-  Wi-Fi Aware connection maps paired-device id → Crossshare id, which is then remembered so the
+- A browse result only identifies the paired device, not the Crosshare id. The first hello on a
+  Wi-Fi Aware connection maps paired-device id → Crosshare id, which is then remembered so the
   device merges with its Wi-Fi/Bluetooth entry. Until then the peer id is `aware:<paired id>`.
 - Not on macOS (no API), and Android can't join iPhones here. Android's public API (14+) can pair,
   but it can only secure a data path with a passphrase or PMK, not with pairing keys, and it only
@@ -53,8 +53,8 @@ everything itself.
 3. The **initiator** is the side that opened the connection.
    `salt = SHA256(initiatorPub || responderPub)`.
 4. `HKDF-SHA256(shared, salt, info, 32)` gives:
-   - `info = "crossshare/v1/i2r"`: key for initiator → responder
-   - `info = "crossshare/v1/r2i"`: key for responder → initiator
+   - `info = "crosshare/v1/i2r"`: key for initiator → responder
+   - `info = "crosshare/v1/r2i"`: key for responder → initiator
 5. Frames: `u32 big-endian length N` + `N` bytes of AES-256-GCM output
    (ciphertext followed by the 16-byte tag). The nonce is 4 zero bytes plus
    a u64 big-endian counter that starts at 0 per direction. There is no AAD.
@@ -118,8 +118,8 @@ Wi-Fi Aware). Late `upgrade*` messages are ignored. A host ignores an
 `upgradeFailed` whose `token` names a different offer.
 
 For Wi-Fi Aware, the host publishes a one-off service name
-(`crossshare-<8 hex>`) and offers it with a random passphrase. The joiner
-subscribes to it and sends the discovery message `crossshare-join`, so the host
+(`crosshare-<8 hex>`) and offers it with a random passphrase. The joiner
+subscribes to it and sends the discovery message `crosshare-join`, so the host
 learns its peer handle. Both sides then request a data path secured with the
 passphrase. The host sets its TCP port on the data path, and the joiner reads it
 with the host's link-local IPv6 address from `WifiAwareNetworkInfo`. The rest

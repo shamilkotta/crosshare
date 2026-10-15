@@ -1,11 +1,11 @@
 import AppKit
 import UniformTypeIdentifiers
 
-/// Share menu extension: hands what the user shared to Crossshare.app, which shows nearby devices.
+/// Share menu extension: hands what the user shared to Crosshare.app, which shows nearby devices.
 ///
 /// Files go to the app as an "open documents" event, like Finder's Open With. Data without a file
 /// (e.g. an image from Photos) is copied to this extension's temporary folder first. Text and web
-/// links go as crossshare://share?text=…
+/// links go as crosshare://share?text=…
 @objc(ShareViewController)
 final class ShareViewController: NSViewController {
   override func loadView() {
@@ -78,13 +78,13 @@ final class ShareViewController: NSViewController {
     }
   }
 
-  /// Crossshare.app/Contents/PlugIns/CrossshareShare.appex
+  /// Crosshare.app/Contents/PlugIns/CrosshareShare.appex
   private func handOff(files: [URL], text: String) {
     let app = Bundle.main.bundleURL.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
     var urls = files
     if !text.isEmpty {
       var c = URLComponents()
-      c.scheme = "crossshare"
+      c.scheme = "crosshare"
       c.host = "share"
       c.queryItems = [URLQueryItem(name: "text", value: text)]
       if let url = c.url { urls.append(url) }

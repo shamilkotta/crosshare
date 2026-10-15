@@ -13,7 +13,7 @@ import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, Fonts } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useCrossshare } from '@/context/crossshare-context';
+import { useCrosshare } from '@/context/crosshare-context';
 import { NearbyDevicesModal } from '@/components/nearby-devices-modal';
 import Animated, {
   useAnimatedStyle,
@@ -189,7 +189,7 @@ export default function SearchingScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const themeColors = Colors[colorScheme];
   const { peers, setDiscovering, selection, setSelection, send, bluetooth } =
-    useCrossshare();
+    useCrosshare();
   const [sendingTo, setSendingTo] = React.useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -320,7 +320,7 @@ export default function SearchingScreen() {
               style={[styles.statusSubtitle, { color: themeColors.mutedText }]}
             >
               {bluetooth === 'on'
-                ? 'Keep Crossshare open on the other device. No shared Wi-Fi needed.'
+                ? 'Keep Crosshare open on the other device. No shared Wi-Fi needed.'
                 : 'Turn on Bluetooth to find devices that are not on your Wi-Fi.'}
             </Text>
 

@@ -7,7 +7,7 @@ public final class FileStorage: @unchecked Sendable {
 
   public init(downloads: URL) {
     self.downloads = downloads
-    temp = FileManager.default.temporaryDirectory.appendingPathComponent("crossshare-incoming", isDirectory: true)
+    temp = FileManager.default.temporaryDirectory.appendingPathComponent("crosshare-incoming", isDirectory: true)
   }
 
   final class Sink {

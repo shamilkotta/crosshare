@@ -15,11 +15,11 @@ const {
  *   transfers. Needs the "Hotspot" capability on your App ID.
  * - wifiAware (default true): Wi-Fi Aware between paired devices on iOS 26+. Needs the
  *   "Wi-Fi Aware" capability (paid developer team) on your App ID.
- * - share (default true): show Crossshare in the system share sheet ("Share" / "Open with").
+ * - share (default true): show Crosshare in the system share sheet ("Share" / "Open with").
  *   On iOS this adds a share extension, which needs the "App Groups" capability on both App IDs
  *   (<bundle id> and <bundle id>.share) with the group group.<bundle id>.
  */
-const withCrossshare = (config, props = {}) => {
+const withCrosshare = (config, props = {}) => {
   const hotspot = props.hotspot !== false;
   const wifiAware = props.wifiAware !== false;
   const share = props.share !== false;
@@ -33,7 +33,7 @@ const withCrossshare = (config, props = {}) => {
       props.bluetoothPermission ||
       '$(PRODUCT_NAME) uses Bluetooth to find nearby devices, even without Wi-Fi.';
     plist.NSBonjourServices = Array.from(
-      new Set([...(plist.NSBonjourServices || []), '_crossshare._tcp'])
+      new Set([...(plist.NSBonjourServices || []), '_crosshare._tcp'])
     );
     plist.UIBackgroundModes = Array.from(
       new Set([
@@ -45,14 +45,14 @@ const withCrossshare = (config, props = {}) => {
     // Show received files in the Files app.
     plist.UIFileSharingEnabled = true;
     plist.LSSupportsOpeningDocumentsInPlace = true;
-    plist.CrossshareHotspotJoin = hotspot;
+    plist.CrosshareHotspotJoin = hotspot;
     if (wifiAware) {
       plist.WiFiAwareServices = {
         ...(plist.WiFiAwareServices || {}),
-        '_crossshare._tcp': { Publishable: {}, Subscribable: {} },
+        '_crosshare._tcp': { Publishable: {}, Subscribable: {} },
       };
     }
-    if (share) plist.CrossshareAppGroup = appGroup(config);
+    if (share) plist.CrosshareAppGroup = appGroup(config);
     return config;
   });
 
@@ -83,7 +83,7 @@ const withCrossshare = (config, props = {}) => {
   return config;
 };
 
-// Android: the main activity accepts shares and "open with". CrossshareCoreModule reads the intent.
+// Android: the main activity accepts shares and "open with". CrosshareCoreModule reads the intent.
 
 const withAndroidShareTarget = (config) =>
   withAndroidManifest(config, (config) => {
@@ -113,7 +113,7 @@ const withAndroidShareTarget = (config) =>
 
 // iOS: a share extension target that hands files to the app through the app group.
 
-const SHARE_TARGET = 'CrossshareShare';
+const SHARE_TARGET = 'CrosshareShare';
 
 const appGroup = (config) => `group.${config.ios?.bundleIdentifier}`;
 
@@ -143,8 +143,8 @@ const withShareExtensionFiles = (config) =>
           // Must match the app's versions.
           CFBundleShortVersionString: config.version || '1.0.0',
           CFBundleVersion: config.ios?.buildNumber || '1',
-          CrossshareAppGroup: appGroup(config),
-          CrossshareHostScheme: hostScheme(config),
+          CrosshareAppGroup: appGroup(config),
+          CrosshareHostScheme: hostScheme(config),
           NSExtension: {
             NSExtensionAttributes: {
               NSExtensionActivationRule: {
@@ -250,4 +250,4 @@ function plist(value) {
   );
 }
 
-module.exports = withCrossshare;
+module.exports = withCrosshare;

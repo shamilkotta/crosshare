@@ -12,7 +12,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ThemeProvider } from '@/context/theme-context';
-import { CrossshareProvider } from '@/context/crossshare-context';
+import { CrosshareProvider } from '@/context/crosshare-context';
 import { TransferStatus } from '@/components/transfer-status';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -43,10 +43,10 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider>
-      <CrossshareProvider>
+      <CrosshareProvider>
         <LayoutContent />
         <TransferStatus />
-      </CrossshareProvider>
+      </CrosshareProvider>
     </ThemeProvider>
   );
 }

@@ -1,9 +1,9 @@
 {
   "platforms": ["apple", "android"],
   "apple": {
-    "modules": ["CrossshareCoreModule"]
+    "modules": ["CrosshareCoreModule"]
   },
   "android": {
-    "modules": ["com.crossshare.core.CrossshareCoreModule"]
+    "modules": ["com.crosshare.core.CrosshareCoreModule"]
   }
 }

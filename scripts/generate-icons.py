@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generates every Crossshare logo/icon asset from one vector definition of the "((×))" mark.
+"""Generates every Crosshare logo/icon asset from one vector definition of the "((×))" mark.
 
 Run from anywhere: python3 scripts/generate-icons.py  (needs Pillow; macOS for iconutil).
 Outputs: assets/brand/*.svg, Expo source images, the prebuilt iOS/Android resources and the Mac app icon.
@@ -168,7 +168,7 @@ def main():
   write_svgs()
   mobile = "apps/mobile/assets/images"
   android = "apps/mobile/android/app/src/main/res"
-  ios = "apps/mobile/ios/Crossshare/Images.xcassets"
+  ios = "apps/mobile/ios/Crosshare/Images.xcassets"
 
   # iOS: full-bleed opaque square; the OS applies the rounded mask.
   ios_icon = render(1024, 1024 * 0.62, BLACK)

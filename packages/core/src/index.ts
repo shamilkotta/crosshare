@@ -1,2 +1,2 @@
-export { default } from './CrossshareCoreModule';
-export * from './CrossshareCore.types';
+export { default } from './CrosshareCoreModule';
+export * from './CrosshareCore.types';

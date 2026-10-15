@@ -231,7 +231,7 @@ export function NearbyDevicesModal({
                 <ThemedText
                   style={[styles.footerText, { color: mutedTextColor }]}
                 >
-                  THE OTHER DEVICE NEEDS CROSSSHARE OPEN
+                  THE OTHER DEVICE NEEDS CROSSHARE OPEN
                 </ThemedText>
               </ScrollView>
             </Animated.View>

@@ -15,7 +15,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, Fonts } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { Selection } from '@/context/crossshare-context';
+import { Selection } from '@/context/crosshare-context';
 
 type Props = {
   visible: boolean;

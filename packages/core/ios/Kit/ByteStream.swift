@@ -24,7 +24,7 @@ extension ByteStream {
 
 final class NWByteStream: ByteStream, @unchecked Sendable {
   let connection: NWConnection
-  private let queue = DispatchQueue(label: "crossshare.nwstream")
+  private let queue = DispatchQueue(label: "crosshare.nwstream")
 
   init(_ connection: NWConnection) {
     self.connection = connection
@@ -85,7 +85,7 @@ final class NWByteStream: ByteStream, @unchecked Sendable {
 final class FoundationByteStream: NSObject, ByteStream, StreamDelegate, @unchecked Sendable {
   private let input: InputStream
   private let output: OutputStream
-  private let queue = DispatchQueue(label: "crossshare.l2cap")
+  private let queue = DispatchQueue(label: "crosshare.l2cap")
   /// Keeps the owner of the streams (the L2CAP channel) alive.
   private var owner: AnyObject?
   private var onClose: (() -> Void)?

@@ -12,12 +12,12 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors, Fonts } from '@/constants/theme';
 import * as Clipboard from 'expo-clipboard';
-import Crossshare from '@crossshare/core';
+import Crosshare from '@crosshare/core';
 import {
   HistoryEntry,
   formatSize,
-  useCrossshare,
-} from '@/context/crossshare-context';
+  useCrosshare,
+} from '@/context/crosshare-context';
 
 const iconFor = (entry: HistoryEntry) => {
   if (entry.files.length === 0) return 'text.alignleft';
@@ -57,7 +57,7 @@ const HistoryItem = ({ entry }: { entry: HistoryEntry }) => {
   const uri = entry.files.find((f) => f.uri)?.uri;
 
   const onPress = () => {
-    if (uri) Crossshare.openFile(uri);
+    if (uri) Crosshare.openFile(uri);
     else if (entry.text) Clipboard.setStringAsync(entry.text);
   };
 
@@ -111,7 +111,7 @@ export default function HistoryScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme() ?? 'light';
   const themeColors = Colors[colorScheme];
-  const { history } = useCrossshare();
+  const { history } = useCrosshare();
 
   return (
     <View

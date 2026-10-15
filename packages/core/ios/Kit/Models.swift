@@ -149,7 +149,7 @@ public enum CSError: Error, LocalizedError {
 }
 
 enum Constants {
-  static let serviceType = "_crossshare._tcp"
+  static let serviceType = "_crosshare._tcp"
   static let bleService = "0B5E1C9A-3F2D-4E8B-9A71-6C4D2E8F1A30"
   static let bleInfoCharacteristic = "0B5E1C9A-3F2D-4E8B-9A71-6C4D2E8F1A31"
   static let upgradeThreshold: Int64 = 2 * 1024 * 1024
@@ -160,7 +160,7 @@ enum Constants {
 
 func log(_ s: @autoclosure () -> String) {
   #if DEBUG
-  print("[Crossshare] \(s())")
+  print("[Crosshare] \(s())")
   #endif
 }
 

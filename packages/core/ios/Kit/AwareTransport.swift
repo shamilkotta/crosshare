@@ -15,10 +15,10 @@ import UIKit
 import WiFiAware
 
 /// Wi-Fi Aware (iOS 26+): fast peer-to-peer Wi-Fi with devices the user has paired once.
-/// Needs the `com.apple.developer.wifi-aware` entitlement and `_crossshare._tcp` declared under
+/// Needs the `com.apple.developer.wifi-aware` entitlement and `_crosshare._tcp` declared under
 /// `WiFiAwareServices` in Info.plist (the config plugin adds both).
 final class AwareTransport: @unchecked Sendable {
-  private let queue = DispatchQueue(label: "crossshare.aware")
+  private let queue = DispatchQueue(label: "crosshare.aware")
   private var listener: NWListener?
   private var browser: NWBrowser?
   private var browseParameters: NWParameters?

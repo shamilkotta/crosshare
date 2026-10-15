@@ -3,13 +3,13 @@
 import PackageDescription
 
 let package = Package(
-  name: "CrossshareKit",
+  name: "CrosshareKit",
   platforms: [.iOS("15.1"), .macOS(.v13)],
   products: [
-    .library(name: "CrossshareKit", targets: ["CrossshareKit"])
+    .library(name: "CrosshareKit", targets: ["CrosshareKit"])
   ],
   targets: [
-    .target(name: "CrossshareKit", path: "ios/Kit"),
-    .executableTarget(name: "cs-cli", dependencies: ["CrossshareKit"], path: "ios/cli"),
+    .target(name: "CrosshareKit", path: "ios/Kit"),
+    .executableTarget(name: "cs-cli", dependencies: ["CrosshareKit"], path: "ios/cli"),
   ]
 )

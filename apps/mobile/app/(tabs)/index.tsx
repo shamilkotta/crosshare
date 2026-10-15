@@ -7,7 +7,7 @@ import { PlusAnimatedCircles } from '@/components/plus-animated-circles';
 import { SegmentedControl } from '@/components/segmented-control';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors, Fonts } from '@/constants/theme';
-import { useCrossshare } from '@/context/crossshare-context';
+import { useCrosshare } from '@/context/crosshare-context';
 import { SendSourceSheet } from '@/components/send-source-sheet';
 import { useIncomingShare } from '@/hooks/use-incoming-share';
 
@@ -16,7 +16,7 @@ export default function HomeScreen() {
   const themeColors = Colors[colorScheme];
   const router = useRouter();
   const { device, visible, setVisible, bluetooth, setSelection } =
-    useCrossshare();
+    useCrosshare();
   const [pickerVisible, setPickerVisible] = useState(false);
   useIncomingShare();
 

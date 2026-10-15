@@ -1,5 +1,5 @@
 PODS:
-  - CrossshareCore (0.1.0):
+  - CrosshareCore (0.1.0):
     - ExpoModulesCore
   - EXConstants (18.0.13):
     - ExpoModulesCore
@@ -2213,7 +2213,7 @@ PODS:
   - Yoga (0.0.0)
 
 DEPENDENCIES:
-  - CrossshareCore (from `../../../packages/core/ios`)
+  - CrosshareCore (from `../../../packages/core/ios`)
   - EXConstants (from `../../../node_modules/expo-constants/ios`)
   - EXImageLoader (from `../../../node_modules/expo-image-loader/ios`)
   - EXJSONUtils (from `../../../node_modules/expo-json-utils/ios`)
@@ -2325,7 +2325,7 @@ SPEC REPOS:
     - SDWebImageWebPCoder
 
 EXTERNAL SOURCES:
-  CrossshareCore:
+  CrosshareCore:
     :path: "../../../packages/core/ios"
   EXConstants:
     :path: "../../../node_modules/expo-constants/ios"
@@ -2526,7 +2526,7 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
-  CrossshareCore: 399134d6de24d1dba1934ee8985fde877eb3ceee
+  CrosshareCore: 10ab48c6a62a1e321907c0621fd82e222ffd1e17
   EXConstants: fce59a631a06c4151602843667f7cfe35f81e271
   EXImageLoader: 189e3476581efe3ad4d1d3fb4735b7179eb26f05
   EXJSONUtils: 1d3e4590438c3ee593684186007028a14b3686cd
@@ -2633,6 +2633,6 @@ SPEC CHECKSUMS:
   SDWebImageWebPCoder: e38c0a70396191361d60c092933e22c20d5b1380
   Yoga: 5934998fbeaef7845dbf698f698518695ab4cd1a
 
-PODFILE CHECKSUM: 733acf695758365d6b662c1e130b35d08b7857ac
+PODFILE CHECKSUM: 7033079356cf2ec6d88ba6330676a45f08086f23
 
 COCOAPODS: 1.16.2

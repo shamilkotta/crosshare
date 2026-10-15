@@ -7,12 +7,12 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
-import Crossshare, { Transfer, isFinalStatus } from '@crossshare/core';
+import Crosshare, { Transfer, isFinalStatus } from '@crosshare/core';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { ThemedText } from '@/components/themed-text';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { Fonts } from '@/constants/theme';
-import { formatSize, useCrossshare } from '@/context/crossshare-context';
+import { formatSize, useCrosshare } from '@/context/crosshare-context';
 
 const transportLabel = (t: Transfer) =>
   t.transport === 'aware'
@@ -56,7 +56,7 @@ function resultTitle(t: Transfer) {
 }
 
 export function TransferStatus() {
-  const { transfers, requests, respond, cancel, dismiss } = useCrossshare();
+  const { transfers, requests, respond, cancel, dismiss } = useCrosshare();
   const [isExpanded, setIsExpanded] = useState(false);
   const insets = useSafeAreaInsets();
   const scheduled = useRef(new Set<string>());
@@ -214,7 +214,7 @@ export function TransferStatus() {
             {received && firstUri ? (
               <TouchableOpacity
                 style={[styles.actionButton, { borderColor, borderWidth: 1 }]}
-                onPress={() => Crossshare.openFile(firstUri)}
+                onPress={() => Crosshare.openFile(firstUri)}
               >
                 <ThemedText
                   style={[styles.actionButtonText, { color: textColor }]}

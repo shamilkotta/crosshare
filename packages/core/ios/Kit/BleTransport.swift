@@ -13,7 +13,7 @@ final class BleTransport: NSObject, @unchecked Sendable {
     var lastSeen: Date
   }
 
-  private let queue = DispatchQueue(label: "crossshare.ble")
+  private let queue = DispatchQueue(label: "crosshare.ble")
   private var local: LocalDevice
   private let serviceUUID = CBUUID(string: Constants.bleService)
   private let infoUUID = CBUUID(string: Constants.bleInfoCharacteristic)
