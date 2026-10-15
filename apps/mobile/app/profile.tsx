@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import Crossshare from '@crossshare/core';
 import {
   StyleSheet,
   View,
@@ -7,6 +8,9 @@ import {
   ScrollView,
   Modal,
   Pressable,
+  TextInput,
+  Alert,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -14,30 +18,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, Fonts } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/context/theme-context';
-
-const ContactItem = ({
-  name,
-  themeColors,
-}: {
-  name: string;
-  themeColors: any;
-}) => (
-  <View style={[styles.contactItem, { borderColor: themeColors.divider }]}>
-    <View style={styles.contactLeft}>
-      <View
-        style={[styles.contactAvatar, { backgroundColor: themeColors.surface }]}
-      >
-        <IconSymbol name="person.fill" size={16} color={themeColors.text} />
-      </View>
-      <Text style={[styles.contactName, { color: themeColors.text }]}>
-        {name}
-      </Text>
-    </View>
-    <TouchableOpacity style={styles.removeButton}>
-      <IconSymbol name="xmark" size={16} color={themeColors.mutedText} />
-    </TouchableOpacity>
-  </View>
-);
+import { formatSize, useCrossshare } from '@/context/crossshare-context';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -45,6 +26,29 @@ export default function ProfileScreen() {
   const themeColors = Colors[colorScheme];
   const { themeMode, setThemeMode } = useTheme();
   const [isThemeModalVisible, setThemeModalVisible] = useState(false);
+  const { device, rename, history, clearHistory, bluetooth } = useCrossshare();
+  const [editing, setEditing] = useState(false);
+  const [draftName, setDraftName] = useState(device.name);
+
+  const completed = history.filter((h) => h.status === 'completed');
+  const totalShared = completed.reduce(
+    (acc, h) => acc + h.files.reduce((a, f) => a + f.size, 0),
+    0
+  );
+  const wifiAware = useMemo(() => Crossshare.isWifiAwareSupported(), []);
+  const pair = async (mode: 'show' | 'find') => {
+    try {
+      await Crossshare.pairWifiAware(mode);
+    } catch (e: any) {
+      Alert.alert('Pairing failed', e?.message ?? String(e));
+    }
+  };
+
+  const saveName = () => {
+    setEditing(false);
+    if (draftName.trim()) rename(draftName.trim());
+    else setDraftName(device.name);
+  };
 
   const ThemeOption = ({
     mode,
@@ -119,11 +123,41 @@ export default function ProfileScreen() {
                 color={themeColors.text}
               />
             </View>
-            <Text style={[styles.userName, { color: themeColors.text }]}>
-              Alex Johnson
-            </Text>
+            {editing ? (
+              <TextInput
+                value={draftName}
+                onChangeText={setDraftName}
+                onBlur={saveName}
+                onSubmitEditing={saveName}
+                autoFocus
+                maxLength={60}
+                returnKeyType="done"
+                style={[
+                  styles.userName,
+                  styles.nameInput,
+                  { color: themeColors.text, borderColor: themeColors.border },
+                ]}
+              />
+            ) : (
+              <TouchableOpacity
+                style={styles.nameRow}
+                onPress={() => {
+                  setDraftName(device.name);
+                  setEditing(true);
+                }}
+              >
+                <Text style={[styles.userName, { color: themeColors.text }]}>
+                  {device.name}
+                </Text>
+                <IconSymbol
+                  name="pencil"
+                  size={16}
+                  color={themeColors.mutedText}
+                />
+              </TouchableOpacity>
+            )}
             <Text style={[styles.deviceInfo, { color: themeColors.mutedText }]}>
-              IPHONE 15 PRO
+              NAME OTHERS SEE · BLUETOOTH {bluetooth.toUpperCase()}
             </Text>
           </View>
 
@@ -143,7 +177,7 @@ export default function ProfileScreen() {
                 TOTAL SHARED
               </Text>
               <Text style={[styles.statValue, { color: themeColors.text }]}>
-                4.2 GB
+                {formatSize(totalShared)}
               </Text>
             </View>
             <View
@@ -156,10 +190,10 @@ export default function ProfileScreen() {
               <Text
                 style={[styles.statLabel, { color: themeColors.mutedText }]}
               >
-                CONNECTED
+                TRANSFERS
               </Text>
               <Text style={[styles.statValue, { color: themeColors.text }]}>
-                2
+                {completed.length}
               </Text>
             </View>
           </View>
@@ -171,32 +205,67 @@ export default function ProfileScreen() {
             ]}
           />
 
-          {/* Contacts Section */}
-          <View style={styles.sectionHeader}>
-            <Text
-              style={[styles.sectionTitle, { color: themeColors.mutedText }]}
-            >
-              CONTACTS
-            </Text>
-            <Text
-              style={[styles.sectionCount, { color: themeColors.mutedText }]}
-            >
-              3 Total
-            </Text>
-          </View>
+          {wifiAware && (
+            <View style={styles.awareSection}>
+              <Text
+                style={[styles.awareTitle, { color: themeColors.mutedText }]}
+              >
+                WI-FI AWARE
+              </Text>
+              <Text
+                style={[styles.awareText, { color: themeColors.mutedText }]}
+              >
+                Pair once with another iPhone for fast, direct transfers
+                anywhere. One device shows a code, the other enters it.
+              </Text>
+              <View style={styles.awareButtons}>
+                <TouchableOpacity
+                  style={[
+                    styles.awareButton,
+                    { borderColor: themeColors.border },
+                  ]}
+                  onPress={() => pair('show')}
+                >
+                  <Text
+                    style={[styles.signOutText, { color: themeColors.text }]}
+                  >
+                    SHOW CODE
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.awareButton,
+                    { borderColor: themeColors.border },
+                  ]}
+                  onPress={() => pair('find')}
+                >
+                  <Text
+                    style={[styles.signOutText, { color: themeColors.text }]}
+                  >
+                    ENTER CODE
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
 
-          <View style={styles.contactsList}>
-            <ContactItem name="Sarah Miller" themeColors={themeColors} />
-            <ContactItem name="Marcus Chen" themeColors={themeColors} />
-            <ContactItem name="Elena Rodriguez" themeColors={themeColors} />
-          </View>
+          <Text style={[styles.note, { color: themeColors.mutedText }]}>
+            {Platform.OS === 'ios'
+              ? 'Received files are saved in Files › On My iPhone › Crossshare.'
+              : 'Received files are saved in Downloads › Crossshare.'}
+          </Text>
 
-          {/* Sign Out Button */}
           <TouchableOpacity
             style={[styles.signOutButton, { borderColor: themeColors.border }]}
+            onPress={() =>
+              Alert.alert('Clear history?', 'Received files are kept.', [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Clear', style: 'destructive', onPress: clearHistory },
+              ])
+            }
           >
             <Text style={[styles.signOutText, { color: themeColors.text }]}>
-              SIGN OUT
+              CLEAR HISTORY
             </Text>
           </TouchableOpacity>
         </ScrollView>
@@ -236,6 +305,52 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+  awareSection: {
+    marginHorizontal: 24,
+    marginTop: 30,
+  },
+  awareTitle: {
+    fontSize: 11,
+    fontFamily: Fonts.sans.bold,
+    letterSpacing: 2,
+    marginBottom: 8,
+  },
+  awareText: {
+    fontSize: 13,
+    fontFamily: Fonts.sans.regular,
+    lineHeight: 19,
+    marginBottom: 14,
+  },
+  awareButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  awareButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 24,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  nameInput: {
+    borderBottomWidth: 1,
+    minWidth: 200,
+    textAlign: 'center',
+    paddingVertical: 2,
+  },
+  note: {
+    fontSize: 12,
+    fontFamily: Fonts.sans.regular,
+    textAlign: 'center',
+    marginHorizontal: 30,
+    marginTop: 30,
+    lineHeight: 18,
+  },
   container: {
     flex: 1,
   },
@@ -322,52 +437,6 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontFamily: Fonts.sans.medium,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 20,
-    marginTop: 20,
-  },
-  sectionTitle: {
-    fontSize: 12,
-    fontFamily: Fonts.sans.bold,
-    letterSpacing: 3,
-  },
-  sectionCount: {
-    fontSize: 10,
-    fontFamily: Fonts.sans.regular,
-  },
-  contactsList: {
-    width: '100%',
-    gap: 5,
-  },
-  contactItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 0.5,
-  },
-  contactLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 15,
-  },
-  contactAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  contactName: {
-    fontSize: 16,
-    fontFamily: Fonts.sans.regular,
-  },
-  removeButton: {
-    padding: 8,
   },
   signOutButton: {
     width: '80%',

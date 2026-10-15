@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleName</key>
+  <string>Crossshare</string>
+  <key>CFBundleDisplayName</key>
+  <string>Crossshare</string>
+  <key>CFBundleIdentifier</key>
+  <string>com.shamilkotta.crossshare.mac</string>
+  <key>CFBundleExecutable</key>
+  <string>Crossshare</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleShortVersionString</key>
+  <string>1.0.0</string>
+  <key>CFBundleVersion</key>
+  <string>1</string>
+  <key>LSMinimumSystemVersion</key>
+  <string>13.0</string>
+  <key>NSHighResolutionCapable</key>
+  <true/>
+  <key>NSPrincipalClass</key>
+  <string>NSApplication</string>
+  <key>NSBluetoothAlwaysUsageDescription</key>
+  <string>Crossshare uses Bluetooth to find nearby phones, even without Wi-Fi.</string>
+  <key>NSLocalNetworkUsageDescription</key>
+  <string>Crossshare uses the local network to find nearby devices and send files.</string>
+  <key>NSBonjourServices</key>
+  <array>
+    <string>_crossshare._tcp</string>
+  </array>
+  <key>NSLocationWhenInUseUsageDescription</key>
+  <string>macOS requires location access to join the temporary Wi-Fi network an Android phone creates for fast transfers.</string>
+</dict>
+</plist>

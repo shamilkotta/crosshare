@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.anonymous.crossshare'
+    namespace 'com.shamilkotta.crossshare'
     defaultConfig {
-        applicationId 'com.anonymous.crossshare'
+        applicationId 'com.shamilkotta.crossshare'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

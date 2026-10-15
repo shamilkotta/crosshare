@@ -12,8 +12,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ThemeProvider } from '@/context/theme-context';
-import { TransferProvider } from '@/context/transfer-context';
-import { LanProvider } from '@/context/lan-context';
+import { CrossshareProvider } from '@/context/crossshare-context';
 import { TransferStatus } from '@/components/transfer-status';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -44,12 +43,10 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider>
-      <TransferProvider>
-        <LanProvider>
-          <LayoutContent />
-          <TransferStatus />
-        </LanProvider>
-      </TransferProvider>
+      <CrossshareProvider>
+        <LayoutContent />
+        <TransferStatus />
+      </CrossshareProvider>
     </ThemeProvider>
   );
 }
@@ -63,10 +60,6 @@ function LayoutContent() {
     >
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="modal"
-          options={{ presentation: 'modal', title: 'Modal' }}
-        />
         <Stack.Screen name="searching" options={{ headerShown: false }} />
         <Stack.Screen name="profile" options={{ headerShown: false }} />
       </Stack>

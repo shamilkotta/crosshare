@@ -7,7 +7,7 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
-    <string>crossshare</string>
+    <string>Crossshare</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
@@ -28,7 +28,7 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>crossshare</string>
-          <string>com.anonymous.crossshare</string>
+          <string>com.shamilkotta.crossshare</string>
         </array>
       </dict>
       <dict>
@@ -40,9 +40,13 @@
     </array>
     <key>CFBundleVersion</key>
     <string>1</string>
+    <key>CrossshareHotspotJoin</key>
+    <true/>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
     <key>LSRequiresIPhoneOS</key>
+    <true/>
+    <key>LSSupportsOpeningDocumentsInPlace</key>
     <true/>
     <key>NSAppTransportSecurity</key>
     <dict>
@@ -51,17 +55,32 @@
       <key>NSAllowsLocalNetworking</key>
       <true/>
     </dict>
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>$(PRODUCT_NAME) uses Bluetooth to find nearby devices, even without Wi-Fi.</string>
     <key>NSBonjourServices</key>
     <array>
       <string>_crossshare._tcp</string>
     </array>
+    <key>NSCameraUsageDescription</key>
+    <string>Allow $(PRODUCT_NAME) to access your camera</string>
     <key>NSLocalNetworkUsageDescription</key>
-    <string>Crossshare needs local network access to discover nearby devices for file sharing.</string>
+    <string>$(PRODUCT_NAME) uses the local network to find nearby devices and send files.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Allow $(PRODUCT_NAME) to access your microphone</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Allow $(PRODUCT_NAME) to access your photos</string>
     <key>NSUserActivityTypes</key>
     <array>
       <string>$(PRODUCT_BUNDLE_IDENTIFIER).expo.index_route</string>
     </array>
     <key>RCTNewArchEnabled</key>
+    <true/>
+    <key>UIBackgroundModes</key>
+    <array>
+      <string>bluetooth-central</string>
+      <string>bluetooth-peripheral</string>
+    </array>
+    <key>UIFileSharingEnabled</key>
     <true/>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>
@@ -89,5 +108,15 @@
     <string>Automatic</string>
     <key>UIViewControllerBasedStatusBarAppearance</key>
     <false/>
+    <key>WiFiAwareServices</key>
+    <dict>
+      <key>_crossshare._tcp</key>
+      <dict>
+        <key>Publishable</key>
+        <dict/>
+        <key>Subscribable</key>
+        <dict/>
+      </dict>
+    </dict>
   </dict>
 </plist>

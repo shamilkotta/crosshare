@@ -1,9 +1,0 @@
-{
-  "platforms": ["apple", "android"],
-  "apple": {
-    "modules": ["CrossshareLanModule"]
-  },
-  "android": {
-    "modules": ["com.crossshare.lan.CrossshareLanModule"]
-  }
-}

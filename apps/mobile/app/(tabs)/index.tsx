@@ -1,10 +1,5 @@
 import React, { useState } from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  TouchableOpacity,
-} from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -12,28 +7,24 @@ import { PlusAnimatedCircles } from '@/components/plus-animated-circles';
 import { SegmentedControl } from '@/components/segmented-control';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors, Fonts } from '@/constants/theme';
-import { useLan } from '@/context/lan-context';
+import { useCrossshare } from '@/context/crossshare-context';
+import { SendSourceSheet } from '@/components/send-source-sheet';
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const themeColors = Colors[colorScheme];
-  const [sharingMode, setSharingMode] = useState('EVERYONE');
   const router = useRouter();
-  const { startAdvertising, stopAdvertising } = useLan();
+  const { device, visible, setVisible, bluetooth, setSelection } =
+    useCrossshare();
+  const [pickerVisible, setPickerVisible] = useState(false);
 
-  // Handle sharing mode toggle and advertising
-  const handleSharingModeChange = async (mode: string) => {
-    setSharingMode(mode);
-    
-    if (mode === 'CONTACTS' || mode === 'EVERYONE') {
-      // Start advertising when CONTACTS or EVERYONE is selected
-      // Port and device name are automatically configured from the context and native side
-      await startAdvertising();
-    } else if (mode === 'OFF') {
-      // Stop advertising when OFF is selected
-      await stopAdvertising();
-    }
-  };
+  const status = !visible
+    ? 'RECEIVING IS OFF'
+    : bluetooth === 'on'
+      ? `VISIBLE AS ${device.name.toUpperCase()}`
+      : bluetooth === 'unauthorized'
+        ? 'ALLOW BLUETOOTH TO BE FOUND WITHOUT WI-FI'
+        : `VISIBLE ON WI-FI AS ${device.name.toUpperCase()}`;
 
   return (
     <View
@@ -87,7 +78,7 @@ export default function HomeScreen() {
 
         {/* Central Content */}
         <View style={styles.content}>
-          <PlusAnimatedCircles onPress={() => router.push('/searching')} />
+          <PlusAnimatedCircles onPress={() => setPickerVisible(true)} />
 
           <View style={styles.textContainer}>
             <Text style={[styles.selectFilesText, { color: themeColors.text }]}>
@@ -96,22 +87,33 @@ export default function HomeScreen() {
             <Text
               style={[styles.maxTransferText, { color: themeColors.mutedText }]}
             >
-              Maximum 2GB per transfer
+              Photos, files or text to any nearby device
             </Text>
           </View>
         </View>
 
         <View style={styles.statusContainer}>
           <SegmentedControl
-            options={['OFF', 'CONTACTS', 'EVERYONE']}
-            selectedOption={sharingMode}
-            onSelect={handleSharingModeChange}
+            options={['OFF', 'EVERYONE']}
+            selectedOption={visible ? 'EVERYONE' : 'OFF'}
+            onSelect={(mode) => setVisible(mode === 'EVERYONE')}
           />
-          <Text style={[styles.readyText, { color: themeColors.subtleText }]}>
-            READY TO TRANSFER
+          <Text
+            style={[styles.readyText, { color: themeColors.mutedText }]}
+            numberOfLines={1}
+          >
+            {status}
           </Text>
         </View>
       </SafeAreaView>
+      <SendSourceSheet
+        visible={pickerVisible}
+        onClose={() => setPickerVisible(false)}
+        onPicked={(selection) => {
+          setSelection(selection);
+          router.push('/searching');
+        }}
+      />
     </View>
   );
 }
@@ -195,8 +197,8 @@ const styles = StyleSheet.create({
   readyText: {
     fontSize: 10,
     fontFamily: Fonts.sans.bold,
-    letterSpacing: 3,
-    opacity: 0.6,
+    letterSpacing: 2,
+    paddingHorizontal: 30,
   },
   footer: {
     paddingBottom: 40,

@@ -6,14 +6,14 @@ import {
   TouchableOpacity,
   Image,
   DimensionValue,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, Fonts } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useTransfer } from '@/context/transfer-context';
-import { useLan } from '@/context/lan-context';
+import { useCrossshare } from '@/context/crossshare-context';
 import { NearbyDevicesModal } from '@/components/nearby-devices-modal';
 import Animated, {
   useAnimatedStyle,
@@ -71,20 +71,24 @@ const RadarCircle = ({ delay, color }: { delay: number; color: string }) => {
 
 const DeviceNode = ({
   label,
+  sublabel,
   image,
   initials,
   icon,
   top,
   left,
   delay = 0,
+  onPress,
 }: {
   label: string;
+  sublabel?: string;
   image?: any;
   initials?: string;
   icon?: string;
   top: DimensionValue;
   left: DimensionValue;
   delay?: number;
+  onPress?: () => void;
 }) => {
   const colorScheme = useColorScheme() ?? 'light';
   const themeColors = Colors[colorScheme];
@@ -107,28 +111,38 @@ const DeviceNode = ({
 
   return (
     <Animated.View style={[styles.deviceNode, { top, left }, animatedStyle]}>
-      <View
-        style={[
-          styles.nodeIconContainer,
-          {
-            backgroundColor: themeColors.surface,
-            borderColor: themeColors.border,
-          },
-        ]}
-      >
-        {image ? (
-          <Image source={{ uri: image }} style={styles.nodeImage} />
-        ) : initials ? (
-          <Text style={[styles.nodeInitials, { color: themeColors.text }]}>
-            {initials}
+      <TouchableOpacity onPress={onPress} style={styles.nodeTouch}>
+        <View
+          style={[
+            styles.nodeIconContainer,
+            {
+              backgroundColor: themeColors.surface,
+              borderColor: themeColors.border,
+            },
+          ]}
+        >
+          {image ? (
+            <Image source={{ uri: image }} style={styles.nodeImage} />
+          ) : initials ? (
+            <Text style={[styles.nodeInitials, { color: themeColors.text }]}>
+              {initials}
+            </Text>
+          ) : icon ? (
+            <IconSymbol name={icon as any} size={20} color={themeColors.text} />
+          ) : null}
+        </View>
+        <Text
+          style={[styles.nodeLabel, { color: themeColors.text }]}
+          numberOfLines={1}
+        >
+          {label.toUpperCase()}
+        </Text>
+        {sublabel ? (
+          <Text style={[styles.nodeSublabel, { color: themeColors.mutedText }]}>
+            {sublabel}
           </Text>
-        ) : icon ? (
-          <IconSymbol name={icon as any} size={20} color={themeColors.text} />
         ) : null}
-      </View>
-      <Text style={[styles.nodeLabel, { color: themeColors.mutedText }]}>
-        {label.toUpperCase()}
-      </Text>
+      </TouchableOpacity>
     </Animated.View>
   );
 };
@@ -158,140 +172,71 @@ const LoadingDot = ({ delay, color }: { delay: number; color: string }) => {
   );
 };
 
+const POSITIONS = [
+  { top: '10%', left: '15%' },
+  { top: '55%', left: '5%' },
+  { top: '50%', left: '72%' },
+  { top: '78%', left: '40%' },
+  { top: '15%', left: '68%' },
+];
+
+const platformIcon = (p: string) =>
+  p === 'macos' ? 'desktopcomputer' : 'iphone';
+
 export default function SearchingScreen() {
   const router = useRouter();
   const [isModalVisible, setIsModalVisible] = React.useState(false);
   const colorScheme = useColorScheme() ?? 'light';
   const themeColors = Colors[colorScheme];
-  const { startSession, receiveRequest } = useTransfer();
-  const {
-    peers,
-    startDiscovery,
-    stopDiscovery,
-  } = useLan();
+  const { peers, setDiscovering, selection, setSelection, send, bluetooth } =
+    useCrossshare();
+  const [sendingTo, setSendingTo] = React.useState<Set<string>>(new Set());
 
   useEffect(() => {
-    // Start discovery when screen mounts (advertising is handled on home screen)
-    startDiscovery();
+    setDiscovering(true);
+    return () => setDiscovering(false);
+  }, [setDiscovering]);
 
-    return () => {
-      stopDiscovery();
-      // Don't stop advertising here - it's managed on the home screen
-    };
-  }, [startDiscovery, stopDiscovery]);
-
-  // Map LanPeer to the format expected by the UI components if needed
   const devices = peers.map((peer) => ({
     id: peer.id,
     name: peer.name,
-    icon: (peer.platform === 'macos' ? 'desktopcomputer' : 'iphone') as any,
-    status: 'AVAILABLE' as const,
+    icon: platformIcon(peer.platform),
+    status: sendingTo.has(peer.id)
+      ? 'SENT'
+      : peer.routes.includes('wifi')
+        ? 'WI-FI'
+        : peer.routes.includes('aware')
+          ? 'WI-FI AWARE'
+          : 'BLUETOOTH',
   }));
 
-  const mockSingleTransfer = () => {
-    startSession({
-      id: 'session-1',
-      status: 'transferring',
-      users: [
-        {
-          id: 'user-1',
-          name: 'Alex',
-          deviceName: 'iPhone 15 Pro',
-          status: 'transferring',
-          files: [
-            {
-              id: 'file-1',
-              name: 'presentation_final.pdf',
-              size: 18 * 1024 * 1024,
-              transferred: 12.5 * 1024 * 1024,
-              status: 'transferring',
-            },
-          ],
-        },
-      ],
-    });
+  const sendTo = async (peerId: string) => {
+    if (!selection || sendingTo.has(peerId)) return;
+    setSendingTo((prev) => new Set(prev).add(peerId));
+    try {
+      await send(peerId, selection);
+    } catch (e: any) {
+      Alert.alert('Could not send', e?.message ?? String(e));
+      setSendingTo((prev) => {
+        const next = new Set(prev);
+        next.delete(peerId);
+        return next;
+      });
+    }
   };
 
-  const mockMultiUserTransfer = () => {
-    startSession({
-      id: 'session-2',
-      status: 'transferring',
-      users: [
-        {
-          id: 'user-1',
-          name: 'Alex',
-          deviceName: 'iPhone 15 Pro',
-          status: 'transferring',
-          files: [
-            {
-              id: 'file-1',
-              name: 'photo.jpg',
-              size: 5 * 1024 * 1024,
-              transferred: 2 * 1024 * 1024,
-              status: 'transferring',
-            },
-          ],
-        },
-        {
-          id: 'user-2',
-          name: 'Sarah',
-          deviceName: "Sarah's MacBook",
-          status: 'transferring',
-          files: [
-            {
-              id: 'file-2',
-              name: 'photo.jpg',
-              size: 5 * 1024 * 1024,
-              transferred: 4 * 1024 * 1024,
-              status: 'transferring',
-            },
-          ],
-        },
-      ],
-    });
+  const close = () => {
+    setSelection(null);
+    router.back();
   };
 
-  const mockMultiFileTransfer = () => {
-    startSession({
-      id: 'session-3',
-      status: 'transferring',
-      users: [
-        {
-          id: 'user-1',
-          name: 'Alex',
-          deviceName: 'iPhone 15 Pro',
-          status: 'transferring',
-          files: [
-            {
-              id: 'file-1',
-              name: 'doc1.pdf',
-              size: 10 * 1024 * 1024,
-              transferred: 8 * 1024 * 1024,
-              status: 'transferring',
-            },
-            {
-              id: 'file-2',
-              name: 'image.png',
-              size: 5 * 1024 * 1024,
-              transferred: 1 * 1024 * 1024,
-              status: 'transferring',
-            },
-          ],
-        },
-      ],
-    });
-  };
-  const mockReceiveRequest = () => {
-    receiveRequest({
-      id: 'req-1',
-      senderName: 'John',
-      senderDeviceName: 'Pixel 8 Pro',
-      files: [
-        { id: 'f-1', name: 'vacation_photo.jpg', size: 2.5 * 1024 * 1024 },
-        { id: 'f-2', name: 'notes.txt', size: 12 * 1024 },
-      ],
-    });
-  };
+  const summary = !selection
+    ? ''
+    : selection.files.length === 0
+      ? 'Sending text'
+      : selection.files.length === 1
+        ? `Sending ${selection.files[0].name}`
+        : `Sending ${selection.files.length} files`;
 
   return (
     <View
@@ -300,12 +245,16 @@ export default function SearchingScreen() {
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => router.back()}
-          >
+          <TouchableOpacity style={styles.closeButton} onPress={close}>
             <IconSymbol name="xmark" size={24} color={themeColors.text} />
           </TouchableOpacity>
+          <Text
+            style={[styles.summary, { color: themeColors.mutedText }]}
+            numberOfLines={1}
+          >
+            {summary}
+          </Text>
+          <View style={styles.closeButton} />
         </View>
 
         {/* Content */}
@@ -332,25 +281,18 @@ export default function SearchingScreen() {
               />
             </View>
 
-            {/* Device Nodes */}
-            {devices.slice(0, 5).map((device, index) => {
-              // Simple layout logic for discovered devices
-              const positions = [
-                { top: '10%', left: '15%' },
-                { top: '55%', left: '5%' },
-                { top: '50%', left: '75%' },
-                { top: '75%', left: '60%' },
-                { top: '30%', left: '85%' },
-              ];
-              const pos = positions[index % positions.length];
+            {devices.slice(0, POSITIONS.length).map((device, index) => {
+              const pos = POSITIONS[index];
               return (
                 <DeviceNode
                   key={device.id}
                   label={device.name}
+                  sublabel={device.status}
                   icon={device.icon}
-                  top={pos.top as any}
-                  left={pos.left as any}
-                  delay={index * 300}
+                  top={pos.top as DimensionValue}
+                  left={pos.left as DimensionValue}
+                  delay={index * 150}
+                  onPress={() => sendTo(device.id)}
                 />
               );
             })}
@@ -365,19 +307,23 @@ export default function SearchingScreen() {
                 <LoadingDot delay={400} color={themeColors.text} />
               </View>
               <Text style={[styles.statusTitle, { color: themeColors.text }]}>
-                Searching for nearby devices
+                {devices.length === 0
+                  ? 'Searching for nearby devices'
+                  : 'Tap a device to send'}
               </Text>
             </View>
 
             <Text
               style={[styles.statusSubtitle, { color: themeColors.mutedText }]}
             >
-              Ensure Bluetooth and Wi-Fi are enabled on both devices to start
-              sharing.
+              {bluetooth === 'on'
+                ? 'Keep Crossshare open on the other device. No shared Wi-Fi needed.'
+                : 'Turn on Bluetooth to find devices that are not on your Wi-Fi.'}
             </Text>
 
             <TouchableOpacity
               onPress={() => setIsModalVisible(true)}
+              disabled={devices.length === 0}
               style={[
                 styles.foundPill,
                 {
@@ -386,24 +332,6 @@ export default function SearchingScreen() {
                 },
               ]}
             >
-              <View style={styles.avatarStack}>
-                <Image
-                  source={{ uri: 'https://i.pravatar.cc/150?u=1' }}
-                  style={styles.stackedAvatar}
-                />
-                <Image
-                  source={{ uri: 'https://i.pravatar.cc/150?u=2' }}
-                  style={[styles.stackedAvatar, { marginLeft: -10 }]}
-                />
-                <View
-                  style={[
-                    styles.countBadge,
-                    { backgroundColor: 'blue', marginLeft: -10 },
-                  ]}
-                >
-                  <Text style={styles.countBadgeText}>+3</Text>
-                </View>
-              </View>
               <Text
                 style={[styles.foundText, { color: themeColors.mutedText }]}
               >
@@ -417,35 +345,9 @@ export default function SearchingScreen() {
           isVisible={isModalVisible}
           onClose={() => setIsModalVisible(false)}
           devices={devices}
+          onSend={sendTo}
+          sent={sendingTo}
         />
-
-        {/* Test Toolbar */}
-        <View style={styles.testToolbar}>
-          <TouchableOpacity
-            style={styles.testButton}
-            onPress={mockSingleTransfer}
-          >
-            <Text style={styles.testButtonText}>Single</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.testButton}
-            onPress={mockMultiUserTransfer}
-          >
-            <Text style={styles.testButtonText}>Multi User</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.testButton}
-            onPress={mockMultiFileTransfer}
-          >
-            <Text style={styles.testButtonText}>Multi File</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.testButton, { backgroundColor: '#007AFF' }]}
-            onPress={mockReceiveRequest}
-          >
-            <Text style={styles.testButtonText}>Req</Text>
-          </TouchableOpacity>
-        </View>
       </SafeAreaView>
     </View>
   );
@@ -461,7 +363,25 @@ const styles = StyleSheet.create({
   header: {
     height: 60,
     paddingHorizontal: 20,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  summary: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 13,
+    fontFamily: Fonts.sans.medium,
+  },
+  nodeTouch: {
+    alignItems: 'center',
+    maxWidth: 110,
+  },
+  nodeSublabel: {
+    fontSize: 9,
+    fontFamily: Fonts.sans.medium,
+    letterSpacing: 1,
+    marginTop: 2,
   },
   closeButton: {
     width: 40,
@@ -575,49 +495,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: 12,
   },
-  avatarStack: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  stackedAvatar: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#000',
-  },
-  countBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#000',
-  },
-  countBadgeText: {
-    color: '#FFF',
-    fontSize: 10,
-    fontFamily: Fonts.sans.bold,
-  },
   foundText: {
     fontSize: 12,
     fontFamily: Fonts.sans.bold,
     letterSpacing: 1,
-  },
-  testToolbar: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 10,
-    padding: 10,
-  },
-  testButton: {
-    backgroundColor: '#333',
-    padding: 8,
-    borderRadius: 8,
-  },
-  testButtonText: {
-    color: '#FFF',
-    fontSize: 12,
   },
 });

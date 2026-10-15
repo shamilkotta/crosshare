@@ -34,6 +34,21 @@ const MAPPING = {
   'video.fill': 'videocam',
   'music.note': 'audiotrack',
   'checkmark.circle.fill': 'check-circle',
+  'xmark.circle.fill': 'cancel',
+  'text.alignleft': 'notes',
+  'doc.on.doc': 'file-copy',
+  'tray.and.arrow.down.fill': 'download',
+  'chevron.up': 'expand-less',
+  'chevron.down': 'expand-more',
+  'arrow.up.circle': 'upload',
+  'arrow.down.circle': 'download',
+  desktopcomputer: 'computer',
+  iphone: 'smartphone',
+  wifi: 'wifi',
+  'dot.radiowaves.left.and.right': 'bluetooth',
+  pencil: 'edit',
+  trash: 'delete-outline',
+  'square.and.arrow.up': 'open-in-new',
 } as IconMapping;
 
 /**

@@ -11,45 +11,90 @@ import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors, Fonts } from '@/constants/theme';
+import * as Clipboard from 'expo-clipboard';
+import Crossshare from '@crossshare/core';
+import {
+  HistoryEntry,
+  formatSize,
+  useCrossshare,
+} from '@/context/crossshare-context';
 
-const HistoryItem = ({
-  icon,
-  title,
-  subtitle,
-  date,
-  isCheckmark = true,
-}: {
-  icon: string;
-  title: string;
-  subtitle: string;
-  date: string;
-  isCheckmark?: boolean;
-}) => {
+const iconFor = (entry: HistoryEntry) => {
+  if (entry.files.length === 0) return 'text.alignleft';
+  if (entry.files.length > 1) return 'doc.on.doc';
+  const ext = entry.files[0].name.split('.').pop()?.toLowerCase() ?? '';
+  if (['jpg', 'jpeg', 'png', 'heic', 'gif', 'webp'].includes(ext))
+    return 'photo.fill';
+  if (['mp4', 'mov', 'mkv', 'webm'].includes(ext)) return 'video.fill';
+  if (['mp3', 'wav', 'm4a', 'aac', 'flac'].includes(ext)) return 'music.note';
+  if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return 'archive.fill';
+  return 'doc.fill';
+};
+
+const formatDate = (ms: number) =>
+  new Date(ms)
+    .toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+    .toUpperCase();
+
+const HistoryItem = ({ entry }: { entry: HistoryEntry }) => {
   const colorScheme = useColorScheme() ?? 'light';
   const themeColors = Colors[colorScheme];
+  const title =
+    entry.files.length === 0
+      ? (entry.text ?? '')
+      : entry.files.length === 1
+        ? entry.files[0].name
+        : `${entry.files.length} files`;
+  const size = entry.files.reduce((a, f) => a + f.size, 0);
+  const subtitle = `${entry.direction === 'incoming' ? 'FROM' : 'TO'}: ${entry.peerName.toUpperCase()}${
+    entry.files.length > 0 ? ` · ${formatSize(size)}` : ''
+  }${entry.status === 'completed' ? '' : ` · ${entry.status.toUpperCase()}`}`;
+  const uri = entry.files.find((f) => f.uri)?.uri;
+
+  const onPress = () => {
+    if (uri) Crossshare.openFile(uri);
+    else if (entry.text) Clipboard.setStringAsync(entry.text);
+  };
 
   return (
-    <View
+    <TouchableOpacity
+      onPress={onPress}
+      disabled={!uri && !entry.text}
       style={[styles.historyItem, { borderBottomColor: themeColors.divider }]}
     >
       <View
         style={[styles.iconContainer, { backgroundColor: themeColors.surface }]}
       >
-        <IconSymbol name={icon as any} size={22} color={themeColors.text} />
+        <IconSymbol
+          name={iconFor(entry) as any}
+          size={22}
+          color={themeColors.text}
+        />
       </View>
       <View style={styles.itemContent}>
-        <Text style={[styles.itemTitle, { color: themeColors.text }]}>
+        <Text
+          style={[styles.itemTitle, { color: themeColors.text }]}
+          numberOfLines={1}
+        >
           {title}
         </Text>
-        <Text style={[styles.itemSubtitle, { color: themeColors.mutedText }]}>
+        <Text
+          style={[styles.itemSubtitle, { color: themeColors.mutedText }]}
+          numberOfLines={1}
+        >
           {subtitle}
         </Text>
       </View>
       <View style={styles.itemRight}>
         <Text style={[styles.itemDate, { color: themeColors.mutedText }]}>
-          {date}
+          {formatDate(entry.date)}
         </Text>
-        {isCheckmark && (
+        {entry.status === 'completed' && (
           <IconSymbol
             name="checkmark.circle.fill"
             size={16}
@@ -58,7 +103,7 @@ const HistoryItem = ({
           />
         )}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -66,39 +111,7 @@ export default function HistoryScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme() ?? 'light';
   const themeColors = Colors[colorScheme];
-
-  const historyData = [
-    {
-      icon: 'doc.fill',
-      title: 'presentation_final.pdf',
-      subtitle: 'TO: SARAH JENKINS',
-      date: 'OCT 24, 14:20',
-    },
-    {
-      icon: 'photo.fill',
-      title: 'IMG_9021.heic',
-      subtitle: 'FROM: MICHAEL R.',
-      date: 'OCT 23, 09:12',
-    },
-    {
-      icon: 'archive.fill',
-      title: 'source_assets.zip',
-      subtitle: 'TO: CREATIVE TEAM',
-      date: 'OCT 22, 18:45',
-    },
-    {
-      icon: 'video.fill',
-      title: 'vlog_edit_v2.mp4',
-      subtitle: 'FROM: ALEX CHEN',
-      date: 'OCT 21, 11:30',
-    },
-    {
-      icon: 'music.note',
-      title: 'interview_rec.wav',
-      subtitle: 'TO: EDITOR',
-      date: 'OCT 20, 16:15',
-    },
-  ];
+  const { history } = useCrossshare();
 
   return (
     <View
@@ -151,9 +164,13 @@ export default function HistoryScreen() {
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          {historyData.map((item, index) => (
-            <HistoryItem key={index} {...item} />
-          ))}
+          {history.length === 0 ? (
+            <Text style={[styles.empty, { color: themeColors.mutedText }]}>
+              Nothing shared yet
+            </Text>
+          ) : (
+            history.map((entry) => <HistoryItem key={entry.id} entry={entry} />)
+          )}
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -161,6 +178,12 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
+  empty: {
+    textAlign: 'center',
+    marginTop: 80,
+    fontSize: 14,
+    fontFamily: Fonts.sans.regular,
+  },
   container: {
     flex: 1,
   },

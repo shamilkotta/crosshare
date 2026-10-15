@@ -43,12 +43,16 @@ interface NearbyDevicesModalProps {
   isVisible: boolean;
   onClose: () => void;
   devices: Device[];
+  onSend: (deviceId: string) => void;
+  sent: Set<string>;
 }
 
 export function NearbyDevicesModal({
   isVisible,
   onClose,
   devices,
+  onSend,
+  sent,
 }: NearbyDevicesModalProps) {
   const insets = useSafeAreaInsets();
   const translateY = useSharedValue(0);
@@ -205,15 +209,20 @@ export function NearbyDevicesModal({
                       </ThemedText>
                     </View>
                     <TouchableOpacity
+                      disabled={sent.has(device.id)}
+                      onPress={() => onSend(device.id)}
                       style={[
                         styles.sendButton,
-                        { backgroundColor: darkColor },
+                        {
+                          backgroundColor: darkColor,
+                          opacity: sent.has(device.id) ? 0.4 : 1,
+                        },
                       ]}
                     >
                       <ThemedText
                         style={[styles.sendButtonText, { color: lightColor }]}
                       >
-                        Send
+                        {sent.has(device.id) ? 'Sent' : 'Send'}
                       </ThemedText>
                     </TouchableOpacity>
                   </View>
@@ -222,7 +231,7 @@ export function NearbyDevicesModal({
                 <ThemedText
                   style={[styles.footerText, { color: mutedTextColor }]}
                 >
-                  KEEP APP OPEN TO STAY DISCOVERABLE
+                  THE OTHER DEVICE NEEDS CROSSSHARE OPEN
                 </ThemedText>
               </ScrollView>
             </Animated.View>

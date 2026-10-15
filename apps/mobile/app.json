@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "crossshare",
+    "name": "Crossshare",
     "slug": "crossshare",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.crossshare"
+      "bundleIdentifier": "com.shamilkotta.crossshare"
     },
     "android": {
       "adaptiveIcon": {
@@ -21,7 +21,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.crossshare"
+      "package": "com.shamilkotta.crossshare"
     },
     "web": {
       "output": "static",
@@ -42,10 +42,8 @@
         }
       ],
       [
-        "@crossshare/lan",
-        {
-          "localNetworkPermission": "Crossshare needs local network access to discover nearby devices for file sharing."
-        }
+        "@crossshare/core",
+        {}
       ]
     ],
     "experiments": {
