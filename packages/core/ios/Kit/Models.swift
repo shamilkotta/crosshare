@@ -33,6 +33,24 @@ public struct Peer: Equatable, Identifiable {
   public let routes: [String]
 }
 
+/// A device both sides agreed to link. Text from it is accepted without asking.
+public struct LinkedDevice: Codable, Equatable, Identifiable {
+  public let id: String
+  public var name: String
+  public var platform: CSPlatform
+  /// Its identity public key (hex, uncompressed P-256).
+  public let key: String
+}
+
+public enum TransferKind: String {
+  /// Files and/or text.
+  case transfer
+  /// A request to link the two devices.
+  case link
+  /// Tells the peer this device removed the link. Never shown to the user.
+  case unlink
+}
+
 public enum TransferDirection: String {
   case outgoing, incoming
 }
@@ -65,6 +83,11 @@ public struct Transfer {
   public var status: TransferStatus
   public var files: [TransferFile]
   public var text: String?
+  public var kind: TransferKind
+  /// Incoming text from a linked device, accepted without asking.
+  public var trusted: Bool
+  /// Link requests: six digits both devices show. The users confirm they match.
+  public var code: String?
   /// "wifi", "aware" (Wi-Fi Aware), "bluetooth" or "hotspot".
   public var transport: String
   public var error: String?
@@ -115,6 +138,16 @@ struct Msg: Codable {
   var port: Int?
   var token: String?
   var reason: String?
+  /// hello: identity public key (hex) and its signature over the handshake (hex DER).
+  var key: String?
+  var sig: String?
+  /// hello: whether the sender has the receiver linked.
+  var linked: Bool?
+  /// offer: "link" or "unlink"; absent for a normal transfer.
+  var kind: String?
+  /// Link offers: SHA256 of the initiator's nonce, hex. linkNonce / linkReveal: a nonce, hex.
+  var commit: String?
+  var nonce: String?
 
   init(_ t: String) { self.t = t }
 

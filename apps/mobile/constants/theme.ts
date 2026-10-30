@@ -1,47 +1,38 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Monochrome palette shared with the macOS app (apps/mac/Sources/Crosshare/Theme.swift).
+ * Hierarchy comes from weight and grey levels, never from hue.
  */
-
-import { Platform } from 'react-native';
-
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
-
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
-    mutedText: '#999',
-    subtleText: '#CCC',
-    border: '#b7b7b7ff',
-    divider: '#e3e3e3ff',
-    surface: '#F0F0F0',
-    circleColor: 'rgba(0, 0, 0, 0.15)',
-    dark: '#000000',
-    light: '#FFFFFF',
+    background: '#FFFFFF',
+    surface: '#FAFAFA',
+    surfaceHover: '#F2F2F2',
+    text: '#0A0A0A',
+    secondary: '#666666',
+    tertiary: '#A3A3A3',
+    border: '#EBEBEB',
+    borderStrong: '#D4D4D4',
+    /** Primary button fill and the text on it. */
+    inverse: '#0A0A0A',
+    onInverse: '#FFFFFF',
+    overlay: 'rgba(0,0,0,0.32)',
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#000000',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
-    mutedText: '#666',
-    subtleText: '#444',
-    border: '#4e4e4eff',
-    divider: '#1e1e1eff',
-    surface: '#1A1A1A',
-    circleColor: 'rgba(255, 255, 255, 0.4)',
-    dark: '#FFF',
-    light: '#000000',
+    background: '#0A0A0A',
+    surface: '#111111',
+    surfaceHover: '#1A1A1A',
+    text: '#EDEDED',
+    secondary: '#A1A1A1',
+    tertiary: '#5C5C5C',
+    border: '#1F1F1F',
+    borderStrong: '#2E2E2E',
+    inverse: '#EDEDED',
+    onInverse: '#0A0A0A',
+    overlay: 'rgba(0,0,0,0.6)',
   },
 };
+
+export type Palette = (typeof Colors)['light'];
 
 export const Fonts = {
   sans: {
@@ -54,3 +45,5 @@ export const Fonts = {
     regular: 'GeistMono-Regular',
   },
 };
+
+export const Radius = { sm: 6, md: 10, lg: 14 };

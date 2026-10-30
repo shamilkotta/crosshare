@@ -2,6 +2,7 @@ package com.crosshare.core
 
 import android.content.Context
 import com.crosshare.core.protocol.Conn
+import com.crosshare.core.protocol.LinkedDevice
 import com.crosshare.core.protocol.LocalDevice
 import com.crosshare.core.protocol.OutgoingFile
 import com.crosshare.core.protocol.Peer
@@ -21,6 +22,7 @@ class CrosshareEngine(
     fun onPeersChanged(peers: List<Peer>)
     fun onRequest(transfer: Transfer)
     fun onTransferUpdate(transfer: Transfer)
+    fun onLinksChanged(links: List<LinkedDevice>) {}
   }
 
   var listener: Listener? = null
@@ -31,6 +33,7 @@ class CrosshareEngine(
   private val ble = BleTransport(context, device)
   private val storage = AndroidStorage(context)
   private val io = Executors.newCachedThreadPool()
+  private val links = Links(context) { list -> listener?.onLinksChanged(list) }
 
   private val lock = Object()
   private var lanPeers: Map<String, NsdTransport.Found> = emptyMap()
@@ -130,17 +133,34 @@ class CrosshareEngine(
     listener?.onPeersChanged(current)
   }
 
+  // Linked devices
+
+  /** Devices this one is linked with. Text from them is accepted without asking. */
+  val linkedDevices: List<LinkedDevice> get() = links.all
+
+  /** Asks a nearby device to link. Both sides save the link once it accepts. Returns the transfer id. */
+  fun link(peerId: String): String = send(emptyList(), null, peerId, kind = "link")
+
+  /**
+   * Removes a link here and, if the device is nearby, tells it to remove its side too.
+   * If it isn't nearby, it drops the link the next time the two devices connect.
+   */
+  fun unlink(id: String) {
+    if (links.unlink(id) == null) return
+    runCatching { send(emptyList(), null, id, kind = "unlink") }
+  }
+
   // Transfers
 
   /** Sends files and/or text to a nearby device. Returns the transfer id. */
-  fun send(files: List<OutgoingFile>, text: String?, peerId: String): String {
+  fun send(files: List<OutgoingFile>, text: String?, peerId: String, kind: String = "transfer"): String {
     val (lan, bt) = synchronized(lock) { lanPeers[peerId] to blePeers[peerId] }
     val peer = Peer(peerId, lan?.name ?: bt?.name ?: "Unknown device", lan?.platform ?: bt?.platform ?: "android", emptyList())
     val id = UUID.randomUUID().toString()
     val session = makeSession(id, "outgoing", peer)
     when {
-      lan != null -> session.startOutgoing(files, text, "wifi") { nsd.connect(lan) }
-      bt != null -> session.startOutgoing(files, text, "bluetooth") { ble.connect(bt) }
+      lan != null -> session.startOutgoing(files, text, "wifi", kind) { nsd.connect(lan) }
+      bt != null -> session.startOutgoing(files, text, "bluetooth", kind) { ble.connect(bt) }
       else -> {
         sessions.remove(id)
         throw IllegalStateException("Device is no longer nearby")
@@ -182,6 +202,7 @@ class CrosshareEngine(
         listener?.onTransferUpdate(t)
       },
       onRequest = { t -> listener?.onRequest(t) },
+      trust = links,
     )
     sessions[id] = session
     return session

@@ -4,6 +4,7 @@ import {
   BluetoothState,
   CrosshareEvents,
   DeviceInfo,
+  LinkedDevice,
   OutgoingFile,
   Peer,
   SharedItems,
@@ -38,6 +39,15 @@ declare class CrosshareCoreModule extends NativeModule<CrosshareEvents> {
     files: OutgoingFile[],
     text?: string | null
   ): Promise<string>;
+  /** Devices this one is linked with. */
+  getLinkedDevices(): LinkedDevice[];
+  /**
+   * Asks a nearby device to link. Once it accepts, both sides save the link and text between
+   * them is accepted without asking. Resolves with the transfer id.
+   */
+  link(peerId: string): Promise<string>;
+  /** Removes a link on both sides (the other side drops it now if nearby, else on next contact). */
+  unlink(id: string): void;
   /**
    * Takes what another app shared to Crosshare, if anything (each share is returned once).
    * Call on launch, when the app becomes active, and on onShareReceived.

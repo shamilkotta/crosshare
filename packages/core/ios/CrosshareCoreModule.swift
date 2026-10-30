@@ -8,7 +8,9 @@ public class CrosshareCoreModule: Module, CrosshareEngineDelegate {
   public func definition() -> ModuleDefinition {
     Name("CrosshareCore")
 
-    Events("onPeersChanged", "onTransferRequest", "onTransferUpdate", "onBluetoothState", "onShareReceived")
+    Events(
+      "onPeersChanged", "onTransferRequest", "onTransferUpdate", "onBluetoothState", "onShareReceived",
+      "onLinksChanged")
 
     Function("getDeviceInfo") { () -> [String: String] in
       let d = Self.localDevice()
@@ -62,6 +64,12 @@ public class CrosshareCoreModule: Module, CrosshareEngineDelegate {
       return try self.getEngine().send(files: outgoing, text: text, to: peerId)
     }
 
+    Function("getLinkedDevices") { () -> [[String: Any]] in self.getEngine().linkedDevices.map(Self.linkDict) }
+
+    AsyncFunction("link") { (peerId: String) throws -> String in try self.getEngine().link(peerId: peerId) }
+
+    Function("unlink") { (id: String) in self.getEngine().unlink(id: id) }
+
     /// What the share extension left in the app group, once (see ShareExtension/ShareViewController.swift).
     Function("getSharedItems") { () -> [String: Any]? in Self.takeSharedItems() }
 
@@ -76,6 +84,9 @@ public class CrosshareCoreModule: Module, CrosshareEngineDelegate {
     AsyncFunction("openFile") { (uri: String, _: String?) in
       guard let url = URL(string: uri), let presenter = self.appContext?.utilities?.currentViewController() else {
         return
+      }
+      if url.isFileURL, !FileManager.default.fileExists(atPath: url.path) {
+        throw Exception(name: "ERR_FILE_NOT_FOUND", description: "File no longer exists")
       }
       let sheet = UIActivityViewController(activityItems: [url], applicationActivities: nil)
       sheet.popoverPresentationController?.sourceView = presenter.view
@@ -153,7 +164,17 @@ public class CrosshareCoreModule: Module, CrosshareEngineDelegate {
   }
 
   public func engineDidUpdateTransfer(_ transfer: Transfer) {
+    // Received text goes straight to the clipboard.
+    if transfer.direction == .incoming, transfer.kind == .transfer, transfer.status == .completed,
+      transfer.files.isEmpty, let text = transfer.text
+    {
+      UIPasteboard.general.string = text
+    }
     sendEvent("onTransferUpdate", Self.transferDict(transfer))
+  }
+
+  public func engineDidUpdateLinks(_ links: [LinkedDevice]) {
+    sendEvent("onLinksChanged", ["links": links.map(Self.linkDict)])
   }
 
   public func engineDidUpdateBluetooth(state: String) {
@@ -165,6 +186,10 @@ public class CrosshareCoreModule: Module, CrosshareEngineDelegate {
 
   private static func peerDict(_ p: Peer) -> [String: Any] {
     ["id": p.id, "name": p.name, "platform": p.platform.rawValue, "routes": p.routes]
+  }
+
+  private static func linkDict(_ d: LinkedDevice) -> [String: Any] {
+    ["id": d.id, "name": d.name, "platform": d.platform.rawValue]
   }
 
   private static func transferDict(_ t: Transfer) -> [String: Any] {
@@ -180,11 +205,14 @@ public class CrosshareCoreModule: Module, CrosshareEngineDelegate {
         if let url = f.savedURL { d["uri"] = url.absoluteString }
         return d
       },
+      "kind": t.kind.rawValue,
+      "trusted": t.trusted,
       "transport": t.transport,
       "totalBytes": Double(t.totalBytes),
       "transferredBytes": Double(t.transferredBytes),
     ]
     if let text = t.text { d["text"] = text }
+    if let code = t.code { d["code"] = code }
     if let error = t.error { d["error"] = error }
     return d
   }

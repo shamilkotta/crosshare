@@ -7,11 +7,12 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { AppState, PermissionsAndroid, Platform } from 'react-native';
+import { Alert, AppState, PermissionsAndroid, Platform } from 'react-native';
 import { File, Paths } from 'expo-file-system';
 import Crosshare, {
   BluetoothState,
   DeviceInfo,
+  LinkedDevice,
   OutgoingFile,
   Peer,
   Transfer,
@@ -34,11 +35,23 @@ export type HistoryEntry = {
   date: number;
 };
 
+/** A nearby peer, or a linked device that isn't nearby right now. */
+export type Device = {
+  id: string;
+  name: string;
+  platform: Peer['platform'];
+  linked: boolean;
+  /** Set when the device is nearby and can be sent to. */
+  peer?: Peer;
+};
+
 type Settings = { visible: boolean; history: HistoryEntry[] };
 
 interface CrosshareContextType {
   device: DeviceInfo;
   peers: Peer[];
+  /** Linked devices first (nearby before away), then other nearby devices. */
+  devices: Device[];
   bluetooth: BluetoothState;
   visible: boolean;
   setVisible: (on: boolean) => void;
@@ -46,7 +59,7 @@ interface CrosshareContextType {
   rename: (name: string) => void;
   /** Transfers seen this session, newest first. */
   transfers: Transfer[];
-  /** Incoming transfers waiting for accept/decline, oldest first. */
+  /** Transfers waiting for a decision (incoming, or a link code to confirm), oldest first. */
   requests: Transfer[];
   selection: Selection | null;
   setSelection: (s: Selection | null) => void;
@@ -56,6 +69,10 @@ interface CrosshareContextType {
   dismiss: (transferId: string) => void;
   history: HistoryEntry[];
   clearHistory: () => void;
+  /** Devices whose text is sent and copied without asking. */
+  links: LinkedDevice[];
+  link: (peerId: string) => Promise<void>;
+  unlink: (id: string) => void;
 }
 
 const CrosshareContext = createContext<CrosshareContextType | undefined>(
@@ -116,6 +133,9 @@ export function CrosshareProvider({ children }: { children: React.ReactNode }) {
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [selection, setSelection] = useState<Selection | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>(initial.history);
+  const [links, setLinks] = useState<LinkedDevice[]>(() =>
+    Crosshare.getLinkedDevices()
+  );
   const discoveringCount = useRef(0);
 
   // Persist settings whenever they change.
@@ -124,6 +144,8 @@ export function CrosshareProvider({ children }: { children: React.ReactNode }) {
   }, [visible, history]);
 
   const upsert = useCallback((t: Transfer) => {
+    // Unlink notices are internal.
+    if (t.kind === 'unlink') return;
     setTransfers((prev) => {
       const i = prev.findIndex((p) => p.id === t.id);
       if (i === -1) return [t, ...prev];
@@ -131,7 +153,7 @@ export function CrosshareProvider({ children }: { children: React.ReactNode }) {
       next[i] = t;
       return next;
     });
-    if (isFinalStatus(t.status)) {
+    if (isFinalStatus(t.status) && t.kind === 'transfer') {
       setHistory((prev) => {
         if (prev.some((h) => h.id === t.id)) return prev;
         if (
@@ -168,6 +190,7 @@ export function CrosshareProvider({ children }: { children: React.ReactNode }) {
       Crosshare.addListener('onVisibilityChanged', (e) =>
         setVisibleState(e.visible)
       ),
+      Crosshare.addListener('onLinksChanged', (e) => setLinks(e.links)),
     ];
     ensurePermissions().then(() => {
       Crosshare.setVisible(Crosshare.isVisible?.() ?? initial.visible);
@@ -226,6 +249,29 @@ export function CrosshareProvider({ children }: { children: React.ReactNode }) {
     []
   );
   const clearHistory = useCallback(() => setHistory([]), []);
+  const link = useCallback(async (peerId: string) => {
+    await Crosshare.link(peerId);
+  }, []);
+  const unlink = useCallback((id: string) => Crosshare.unlink(id), []);
+
+  const devices = useMemo(() => {
+    const linkedIds = new Set(links.map((l) => l.id));
+    const nearby: Device[] = peers.map((p) => ({
+      id: p.id,
+      name: p.name,
+      platform: p.platform,
+      linked: linkedIds.has(p.id),
+      peer: p,
+    }));
+    const away: Device[] = links
+      .filter((l) => !peers.some((p) => p.id === l.id))
+      .map((l) => ({ ...l, linked: true }));
+    return [
+      ...nearby.filter((d) => d.linked),
+      ...away,
+      ...nearby.filter((d) => !d.linked),
+    ];
+  }, [peers, links]);
 
   const visibleTransfers = useMemo(
     () => transfers.filter((t) => !dismissed.has(t.id)),
@@ -234,7 +280,11 @@ export function CrosshareProvider({ children }: { children: React.ReactNode }) {
   const requests = useMemo(
     () =>
       visibleTransfers
-        .filter((t) => t.direction === 'incoming' && t.status === 'waiting')
+        .filter(
+          (t) =>
+            t.status === 'waiting' &&
+            (t.direction === 'incoming' || (t.kind === 'link' && !!t.code))
+        )
         .reverse(),
     [visibleTransfers]
   );
@@ -244,6 +294,7 @@ export function CrosshareProvider({ children }: { children: React.ReactNode }) {
       value={{
         device,
         peers,
+        devices,
         bluetooth,
         visible,
         setVisible,
@@ -259,6 +310,9 @@ export function CrosshareProvider({ children }: { children: React.ReactNode }) {
         dismiss,
         history,
         clearHistory,
+        links,
+        link,
+        unlink,
       }}
     >
       {children}
@@ -272,6 +326,21 @@ export function useCrosshare() {
     throw new Error('useCrosshare must be used within a CrosshareProvider');
   return context;
 }
+
+/** Opens a received file, alerting instead of crashing if it was moved or deleted. */
+export const openFile = async (uri: string) => {
+  try {
+    await Crosshare.openFile(uri);
+  } catch (e: any) {
+    const missing = e?.code === 'ERR_FILE_NOT_FOUND';
+    Alert.alert(
+      missing ? 'File not found' : "Couldn't open file",
+      missing
+        ? 'This file may have been moved or deleted.'
+        : (e?.message ?? 'No app available to open this file.')
+    );
+  }
+};
 
 export const formatSize = (bytes: number) => {
   if (bytes < 1024) return `${bytes} B`;

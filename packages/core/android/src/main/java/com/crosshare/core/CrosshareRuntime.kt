@@ -3,6 +3,8 @@ package com.crosshare.core
 import android.Manifest
 import android.app.ActivityManager
 import android.bluetooth.BluetoothAdapter
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
@@ -13,9 +15,11 @@ import android.os.Build
 import android.provider.Settings
 import android.service.quicksettings.TileService
 import androidx.core.content.ContextCompat
+import com.crosshare.core.protocol.LinkedDevice
 import com.crosshare.core.protocol.LocalDevice
 import com.crosshare.core.protocol.Peer
 import com.crosshare.core.protocol.Transfer
+import com.crosshare.core.protocol.TransferStatus
 import java.util.UUID
 import java.util.concurrent.CopyOnWriteArraySet
 
@@ -75,12 +79,29 @@ object CrosshareRuntime {
 
       override fun onTransferUpdate(transfer: Transfer) {
         track(transfer)
+        copyReceivedText(transfer)
         Notifications.onTransferUpdate(context, transfer)
         listeners.forEach { it.onTransferUpdate(transfer) }
+      }
+
+      override fun onLinksChanged(links: List<LinkedDevice>) {
+        listeners.forEach { it.onLinksChanged(links) }
       }
     }
     engine = e
     return e
+  }
+
+  /** Received text goes straight to the clipboard. Writing it is allowed from the background. */
+  private fun copyReceivedText(t: Transfer) {
+    val text = t.text ?: return
+    if (t.direction != "incoming" || t.kind != "transfer" || t.status != TransferStatus.completed || t.files.isNotEmpty()) {
+      return
+    }
+    android.os.Handler(context.mainLooper).post {
+      val clipboard = context.getSystemService(ClipboardManager::class.java) ?: return@post
+      runCatching { clipboard.setPrimaryClip(ClipData.newPlainText("Crosshare", text)) }
+    }
   }
 
   // Visibility ("Everyone" / "Off"), shared by the app and the Quick Settings tile.

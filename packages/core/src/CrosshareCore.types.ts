@@ -20,6 +20,13 @@ export type Peer = {
   routes: Route[];
 };
 
+/** A device both sides agreed to link. Text from it is accepted without asking. */
+export type LinkedDevice = {
+  id: string;
+  name: string;
+  platform: Platform;
+};
+
 export type TransferStatus =
   | 'connecting'
   | 'waiting'
@@ -47,6 +54,15 @@ export type Transfer = {
   status: TransferStatus;
   files: TransferFile[];
   text?: string;
+  /** "link" asks to link the two devices; "unlink" is internal and never needs showing. */
+  kind: 'transfer' | 'link' | 'unlink';
+  /** Incoming text from a linked device, accepted without asking. */
+  trusted: boolean;
+  /**
+   * Link requests: six digits both devices show. Each user checks they match, then confirms with
+   * respond(id, true). Outgoing link requests need this too.
+   */
+  code?: string;
   /** "hotspot" means a Bluetooth transfer upgraded to a temporary Wi-Fi network. */
   transport: 'wifi' | 'aware' | 'bluetooth' | 'hotspot';
   error?: string;
@@ -77,7 +93,7 @@ export type SharedItems = {
 
 export type CrosshareEvents = {
   onPeersChanged: (event: { peers: Peer[] }) => void;
-  /** An incoming transfer needs respond(). */
+  /** An incoming transfer, or an outgoing link request's code, needs respond(). */
   onTransferRequest: (transfer: Transfer) => void;
   onTransferUpdate: (transfer: Transfer) => void;
   onBluetoothState: (event: { state: BluetoothState }) => void;
@@ -85,6 +101,8 @@ export type CrosshareEvents = {
   onShareReceived: () => void;
   /** Android: visibility changed outside the app (Quick Settings tile or notification). */
   onVisibilityChanged: (event: { visible: boolean }) => void;
+  /** A device was linked, unlinked (from either side) or renamed. */
+  onLinksChanged: (event: { links: LinkedDevice[] }) => void;
 };
 
 export const isFinalStatus = (s: TransferStatus) =>

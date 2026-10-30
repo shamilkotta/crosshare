@@ -13,14 +13,11 @@ import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ThemeProvider } from '@/context/theme-context';
 import { CrosshareProvider } from '@/context/crosshare-context';
-import { TransferStatus } from '@/components/transfer-status';
+import { RequestSheet } from '@/components/request-sheet';
+import { Colors } from '@/constants/theme';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
 
 export default function RootLayout() {
   const [loaded] = useFonts({
@@ -45,7 +42,7 @@ export default function RootLayout() {
     <ThemeProvider>
       <CrosshareProvider>
         <LayoutContent />
-        <TransferStatus />
+        <RequestSheet />
       </CrosshareProvider>
     </ThemeProvider>
   );
@@ -56,12 +53,18 @@ function LayoutContent() {
 
   return (
     <NavigationThemeProvider
-      value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}
+      value={{
+        ...(colorScheme === 'dark' ? DarkTheme : DefaultTheme),
+        colors: {
+          ...(colorScheme === 'dark' ? DarkTheme : DefaultTheme).colors,
+          background: Colors[colorScheme].background,
+        },
+      }}
     >
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="searching" options={{ headerShown: false }} />
-        <Stack.Screen name="profile" options={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="settings" />
+        <Stack.Screen name="activity" />
       </Stack>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
     </NavigationThemeProvider>

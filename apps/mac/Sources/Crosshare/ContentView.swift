@@ -2,333 +2,376 @@ import AppKit
 import CrosshareKit
 import SwiftUI
 
+/// The main window: this device, what to send, devices, and activity, top to bottom.
 struct ContentView: View {
   @EnvironmentObject var model: AppModel
-  @State private var renaming = false
-  @State private var textTarget: Peer?
+  @State private var showSettings = false
 
   var body: some View {
-    VStack(spacing: 0) {
-      header
-      Divider()
-      ScrollView {
-        VStack(alignment: .leading, spacing: 24) {
-          ForEach(model.requests, id: \.id) { RequestBanner(transfer: $0) }
-          if let share = model.pending { PendingBanner(share: share) }
-          nearby
-          if !model.transfers.isEmpty { transfers }
+    ScrollView {
+      VStack(alignment: .leading, spacing: 28) {
+        header
+        if !model.requests.isEmpty {
+          VStack(alignment: .leading, spacing: 8) {
+            SectionHeader(model.requests.count == 1 ? "Request" : "Requests · \(model.requests.count)")
+            ForEach(model.requests, id: \.id) { RequestCard(transfer: $0) }
+          }
         }
-        .padding(20)
+        VStack(alignment: .leading, spacing: 8) {
+          SectionHeader(title: "Send") {
+            if model.pending != nil {
+              Button(model.pendingSentTo.isEmpty ? "Clear" : "Done") { model.pending = nil }
+                .buttonStyle(GhostButtonStyle())
+            }
+          }
+          Composer()
+        }
+        devices
+        activity
       }
+      .padding(24)
+      .frame(maxWidth: 640)
+      .frame(maxWidth: .infinity)
     }
-    .sheet(isPresented: $renaming) { RenameSheet(isPresented: $renaming) }
-    .sheet(item: $textTarget) { peer in SendTextSheet(peer: peer) }
+    .background(Palette.background)
+    .sheet(isPresented: $showSettings) { SettingsSheet().environmentObject(model) }
+    .sheet(item: $model.textTarget) { peer in
+      VStack(alignment: .leading, spacing: 14) {
+        HStack(spacing: 10) {
+          DeviceGlyph(platform: peer.platform)
+          Text("Send text to \(peer.name)").font(.system(size: 14, weight: .semibold))
+        }
+        TextComposer(
+          action: "Send",
+          onSubmit: { text in
+            model.textTarget = nil
+            model.send(text: text, to: peer)
+          },
+          onCancel: { model.textTarget = nil })
+      }
+      .padding(20)
+      .frame(width: 420)
+      .background(Palette.background)
+    }
   }
 
   private var header: some View {
-    HStack(spacing: 12) {
-      VStack(alignment: .leading, spacing: 2) {
-        Button {
-          renaming = true
-        } label: {
-          HStack(spacing: 6) {
-            Text(model.deviceName).font(.title3.weight(.semibold))
-            Image(systemName: "pencil").foregroundStyle(.secondary)
-          }
-        }
-        .buttonStyle(.plain)
-        Text(statusLine).font(.caption).foregroundStyle(.secondary)
-      }
-      Spacer()
-      Toggle("Receiving", isOn: $model.visible)
-        .toggleStyle(.switch)
-    }
-    .padding(.horizontal, 20)
-    .padding(.vertical, 14)
-  }
-
-  private var statusLine: String {
-    guard model.visible else { return "Hidden from nearby devices" }
-    switch model.bluetooth {
-    case "on": return "Visible to nearby devices over Wi-Fi and Bluetooth"
-    case "unauthorized": return "Visible on Wi-Fi only. Allow Bluetooth in System Settings › Privacy"
-    case "off": return "Visible on Wi-Fi only. Turn on Bluetooth to reach phones without Wi-Fi"
-    default: return "Visible to nearby devices"
-    }
-  }
-
-  private var nearby: some View {
-    VStack(alignment: .leading, spacing: 12) {
-      Text("NEARBY").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-      if model.peers.isEmpty {
-        VStack(spacing: 8) {
-          ProgressView().controlSize(.small)
-          Text("Looking for nearby devices…")
-          Text("Open Crosshare on your phone. No shared Wi-Fi needed.")
-            .font(.caption).foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 40)
-      } else {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 16)], spacing: 16) {
-          ForEach(model.peers, id: \.id) { peer in
-            PeerTile(peer: peer, onSendText: { textTarget = peer })
-          }
-        }
-        Text(model.pending == nil ? "Drop files on a device, or click it to choose files." : "Click a device to send.")
-          .font(.caption).foregroundStyle(.secondary)
-      }
-    }
-  }
-
-  private var transfers: some View {
-    VStack(alignment: .leading, spacing: 12) {
+    VStack(alignment: .leading, spacing: 16) {
       HStack {
-        Text("TRANSFERS").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+        Text("Crosshare")
+          .font(.system(size: 20, weight: .semibold))
+          .tracking(-0.4)
+          .foregroundStyle(Palette.text)
         Spacer()
-        if model.transfers.contains(where: { $0.status.isFinal }) {
-          Button("Clear") { model.clearFinished() }.buttonStyle(.link).font(.caption)
+        Button { showSettings = true } label: {
+          Image(systemName: "gearshape").font(.system(size: 14))
+        }
+        .buttonStyle(GhostButtonStyle())
+        .keyboardShortcut(",", modifiers: .command)
+        .help("Settings")
+      }
+      Card {
+        HStack(spacing: 12) {
+          DeviceGlyph(platform: .macos, size: 34, dim: !model.visible)
+          VStack(alignment: .leading, spacing: 1) {
+            Text(model.deviceName)
+              .font(.system(size: 13, weight: .medium))
+              .foregroundStyle(Palette.text)
+            Text(model.visible ? "Visible to nearby devices" : "Hidden. No one can send to you")
+              .font(.system(size: 11))
+              .foregroundStyle(Palette.secondary)
+          }
+          Spacer()
+          Toggle("Visible", isOn: $model.visible)
+            .toggleStyle(MonoToggleStyle(small: false))
+            .labelsHidden()
+        }
+        .padding(12)
+        if model.bluetooth == "off" || model.bluetooth == "unauthorized" {
+          Hairline()
+          HStack(spacing: 10) {
+            Image(systemName: "dot.radiowaves.left.and.right")
+              .font(.system(size: 12))
+              .foregroundStyle(Palette.secondary)
+            Text(model.bluetooth == "off"
+              ? "Bluetooth is off. Turn it on to find devices that aren’t on your Wi-Fi."
+              : "Crosshare can’t use Bluetooth. Allow it in System Settings › Privacy & Security.")
+              .font(.system(size: 11))
+              .foregroundStyle(Palette.secondary)
+            Spacer()
+          }
+          .padding(12)
         }
       }
-      ForEach(model.transfers.filter { !($0.direction == .incoming && $0.status == .waiting) }, id: \.id) {
-        TransferRow(transfer: $0)
+    }
+  }
+
+  private var devices: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      SectionHeader(
+        title: model.pending == nil
+          ? "Devices" : model.pendingSentTo.isEmpty ? "Choose a device" : "Send to another device"
+      ) {
+        HStack(spacing: 6) {
+          ProgressView().controlSize(.mini)
+          Text("Searching").font(.system(size: 11)).foregroundStyle(Palette.tertiary)
+        }
+      }
+      if model.devices.isEmpty {
+        EmptyBox(
+          title: "No devices nearby",
+          detail: "Open Crosshare on the other device and make sure it’s visible.")
+      } else {
+        Card {
+          ForEach(Array(model.devices.enumerated()), id: \.element.id) { i, device in
+            if i > 0 { Hairline() }
+            DeviceRow(device: device) { model.textTarget = $0 }
+          }
+        }
+        if model.pending == nil {
+          Text("Click a device to choose files, or drop files onto it. Right-click for more.")
+            .font(.system(size: 11))
+            .foregroundStyle(Palette.tertiary)
+            .padding(.horizontal, 2)
+        }
+      }
+    }
+  }
+
+  private var activity: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      SectionHeader(title: "Activity") {
+        if model.activity.contains(where: { $0.status.isFinal }) {
+          Button("Clear") { model.clearFinished() }.buttonStyle(GhostButtonStyle())
+        }
+      }
+      if model.activity.isEmpty {
+        EmptyBox(title: nil, detail: "Things you send and receive show up here.")
+      } else {
+        Card {
+          ForEach(Array(model.activity.enumerated()), id: \.element.id) { i, transfer in
+            if i > 0 { Hairline() }
+            ActivityRow(transfer: transfer)
+          }
+        }
       }
     }
   }
 }
 
-// MARK: - Peer tile
+// MARK: - Composer
 
-struct PeerTile: View {
+/// Drop zone and buttons for picking what to send. Shows the selection once there is one.
+struct Composer: View {
   @EnvironmentObject var model: AppModel
-  let peer: Peer
-  let onSendText: () -> Void
+  @State private var writing = false
   @State private var targeted = false
 
-  private var icon: String {
-    switch peer.platform {
-    case .macos: return "laptopcomputer"
-    case .android: return "candybarphone"
-    case .ios: return "iphone"
-    }
-  }
-
   var body: some View {
-    Button {
-      if model.pending != nil { model.sendPending(to: peer) } else { chooseFiles() }
-    } label: {
-      VStack(spacing: 8) {
-        Image(systemName: icon)
-          .font(.system(size: 26))
-          .frame(width: 64, height: 64)
-          .background(Circle().fill(targeted ? Color.accentColor.opacity(0.25) : Color.secondary.opacity(0.12)))
-          .overlay(Circle().stroke(targeted ? Color.accentColor : .clear, lineWidth: 2))
-        Text(peer.name).font(.callout.weight(.medium)).lineLimit(1)
-        Text(peer.routes.contains("wifi") ? "Wi-Fi" : "Bluetooth")
-          .font(.caption2).foregroundStyle(.secondary)
+    Group {
+      if writing {
+        TextComposer(
+          action: "Choose Device",
+          onSubmit: { text in
+            writing = false
+            model.select(text: text)
+          },
+          onCancel: { writing = false })
+      } else if let pending = model.pending {
+        selection(pending)
+      } else {
+        dropZone
       }
-      .frame(maxWidth: .infinity)
-      .contentShape(Rectangle())
     }
-    .buttonStyle(.plain)
     .dropDestination(for: URL.self) { urls, _ in
-      model.send(urls: urls, to: peer)
+      model.select(files: urls.filter(\.isFileURL))
+      writing = false
       return true
     } isTargeted: { targeted = $0 }
-    .contextMenu {
-      Button("Send Files…", action: chooseFiles)
-      Button("Send Text…", action: onSendText)
-    }
   }
 
-  private func chooseFiles() {
-    let panel = NSOpenPanel()
-    panel.allowsMultipleSelection = true
-    panel.canChooseDirectories = true
-    panel.prompt = "Send"
-    panel.message = "Send to \(peer.name)"
-    if panel.runModal() == .OK {
-      model.send(urls: panel.urls, to: peer)
+  private var dropZone: some View {
+    VStack(spacing: 14) {
+      VStack(spacing: 4) {
+        Image(systemName: "arrow.down.doc")
+          .font(.system(size: 20, weight: .light))
+          .foregroundStyle(Palette.text)
+        Text(targeted ? "Release to add" : "Drop files or folders here")
+          .font(.system(size: 13, weight: .medium))
+          .foregroundStyle(Palette.text)
+          .padding(.top, 4)
+        Text("Then choose a device below.")
+          .font(.system(size: 11))
+          .foregroundStyle(Palette.secondary)
+      }
+      HStack(spacing: 8) {
+        Button { model.chooseFiles() } label: { Label("Choose Files…", systemImage: "folder") }
+          .buttonStyle(SecondaryButtonStyle())
+          .keyboardShortcut("o", modifiers: .command)
+        Button { writing = true } label: { Label("Text", systemImage: "textformat") }
+          .buttonStyle(SecondaryButtonStyle())
+          .keyboardShortcut("t", modifiers: .command)
+        Button { model.pasteIntoComposer() } label: { Label("Paste", systemImage: "doc.on.clipboard") }
+          .buttonStyle(SecondaryButtonStyle())
+          .keyboardShortcut("v", modifiers: .command)
+      }
+      .labelStyle(.titleAndIcon)
     }
+    .frame(maxWidth: .infinity)
+    .padding(.vertical, 24)
+    .background(
+      RoundedRectangle(cornerRadius: 12)
+        .fill(targeted ? Palette.surfaceHover : Palette.surface)
+    )
+    .overlay(
+      RoundedRectangle(cornerRadius: 12)
+        .strokeBorder(
+          targeted ? Palette.text : Palette.borderStrong,
+          style: StrokeStyle(lineWidth: 1, dash: targeted ? [] : [5, 4]))
+    )
   }
-}
 
-// MARK: - Shared from another app
-
-struct PendingBanner: View {
-  @EnvironmentObject var model: AppModel
-  let share: PendingShare
-
-  var body: some View {
-    HStack(spacing: 12) {
-      Image(systemName: "square.and.arrow.up.fill").font(.title2)
+  private func selection(_ share: PendingShare) -> some View {
+    let isText = share.files.isEmpty
+    let title = isText
+      ? "Text"
+      : share.files.count == 1 ? share.files[0].lastPathComponent : "\(share.files.count) items"
+    let detail = isText
+      ? (share.text ?? "")
+      : share.files.prefix(3).map(\.lastPathComponent).joined(separator: ", ")
+        + (share.files.count > 3 ? " +\(share.files.count - 3)" : "")
+    return HStack(spacing: 12) {
+      Image(systemName: isText ? "textformat" : share.files.count > 1 ? "square.stack" : "doc")
+        .font(.system(size: 15))
+        .foregroundStyle(Palette.text)
+        .frame(width: 34, height: 34)
+        .background(RoundedRectangle(cornerRadius: 8).fill(Palette.background))
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Palette.border))
       VStack(alignment: .leading, spacing: 2) {
-        Text("Choose a device").font(.headline)
-        Text(summary).font(.callout).foregroundStyle(.secondary).lineLimit(2)
+        Text(title)
+          .font(.system(size: 13, weight: .medium))
+          .foregroundStyle(Palette.text)
+          .lineLimit(1)
+        Text(detail)
+          .font(.system(size: 11))
+          .foregroundStyle(Palette.secondary)
+          .lineLimit(2)
       }
       Spacer()
-      Button("Cancel") { model.pending = nil }
-    }
-    .padding(14)
-    .background(RoundedRectangle(cornerRadius: 12).fill(Color.accentColor.opacity(0.12)))
-  }
-
-  private var summary: String {
-    let names = share.files.prefix(3).map(\.lastPathComponent).joined(separator: ", ")
-    let more = share.files.count > 3 ? " and \(share.files.count - 3) more" : ""
-    if share.files.isEmpty { return share.text ?? "" }
-    return "\(names)\(more)"
-  }
-}
-
-// MARK: - Incoming request
-
-struct RequestBanner: View {
-  @EnvironmentObject var model: AppModel
-  let transfer: Transfer
-
-  var body: some View {
-    HStack(spacing: 12) {
-      Image(systemName: "tray.and.arrow.down.fill").font(.title2)
-      VStack(alignment: .leading, spacing: 2) {
-        Text("\(transfer.peerName) wants to share").font(.headline)
-        Text(summary).font(.callout).foregroundStyle(.secondary).lineLimit(2)
-      }
-      Spacer()
-      Button("Decline") { model.respond(transfer, accept: false) }
-      Button("Accept") { model.respond(transfer, accept: true) }
-        .keyboardShortcut(.defaultAction)
-    }
-    .padding(14)
-    .background(RoundedRectangle(cornerRadius: 12).fill(Color.accentColor.opacity(0.12)))
-  }
-
-  private var summary: String {
-    if transfer.files.isEmpty { return transfer.text ?? "" }
-    let size = ByteCountFormatter.string(fromByteCount: transfer.totalBytes, countStyle: .file)
-    let names = transfer.files.prefix(3).map(\.name).joined(separator: ", ")
-    let more = transfer.files.count > 3 ? " and \(transfer.files.count - 3) more" : ""
-    return "\(names)\(more) · \(size)"
-  }
-}
-
-// MARK: - Transfer row
-
-struct TransferRow: View {
-  @EnvironmentObject var model: AppModel
-  let transfer: Transfer
-
-  var body: some View {
-    HStack(spacing: 12) {
-      Image(systemName: transfer.direction == .incoming ? "arrow.down.circle" : "arrow.up.circle")
-        .font(.title2)
-        .foregroundStyle(.secondary)
-      VStack(alignment: .leading, spacing: 4) {
-        Text(title).lineLimit(1)
-        if !transfer.status.isFinal, transfer.totalBytes > 0 {
-          ProgressView(value: Double(transfer.transferredBytes), total: Double(max(transfer.totalBytes, 1)))
-        }
-        Text(caption).font(.caption).foregroundStyle(.secondary).lineLimit(1)
-      }
-      Spacer()
-      actions
+      Text(model.pendingSentTo.isEmpty
+        ? "Choose a device ↓"
+        : "Sent to \(model.pendingSentTo.count) · pick another ↓")
+        .font(.system(size: 11))
+        .foregroundStyle(Palette.tertiary)
     }
     .padding(12)
-    .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary.opacity(0.08)))
+    .background(RoundedRectangle(cornerRadius: 12).fill(Palette.surface))
+    .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Palette.text))
   }
-
-  private var title: String {
-    if transfer.files.isEmpty { return transfer.text ?? "Text" }
-    return transfer.files.count == 1 ? transfer.files[0].name : "\(transfer.files.count) files"
-  }
-
-  private var caption: String {
-    let who = (transfer.direction == .incoming ? "From " : "To ") + transfer.peerName
-    let via = transfer.transport == "hotspot" ? "direct Wi-Fi" : transfer.transport == "bluetooth" ? "Bluetooth" : "Wi-Fi"
-    let bytes = "\(fmt(transfer.transferredBytes)) of \(fmt(transfer.totalBytes))"
-    switch transfer.status {
-    case .connecting: return "\(who) · connecting…"
-    case .waiting: return "\(who) · waiting for them to accept"
-    case .upgrading: return "\(who) · switching to direct Wi-Fi…"
-    case .transferring: return "\(who) · \(bytes) via \(via)"
-    case .completed: return "\(who) · done"
-    case .declined: return "\(who) · declined"
-    case .cancelled: return "\(who) · cancelled"
-    case .failed: return "\(who) · failed: \(transfer.error ?? "unknown error")"
-    }
-  }
-
-  @ViewBuilder private var actions: some View {
-    if !transfer.status.isFinal {
-      Button("Cancel") { model.cancel(transfer) }
-    } else if transfer.direction == .incoming, transfer.status == .completed {
-      if let text = transfer.text, transfer.files.isEmpty {
-        Button("Copy") {
-          NSPasteboard.general.clearContents()
-          NSPasteboard.general.setString(text, forType: .string)
-        }
-      }
-      let urls = transfer.files.compactMap(\.savedURL)
-      if !urls.isEmpty {
-        Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting(urls) }
-      }
-    }
-  }
-
-  private func fmt(_ n: Int64) -> String { ByteCountFormatter.string(fromByteCount: n, countStyle: .file) }
 }
 
-// MARK: - Sheets
+struct EmptyBox: View {
+  let title: String?
+  let detail: String
 
-struct RenameSheet: View {
+  var body: some View {
+    VStack(spacing: 4) {
+      if let title {
+        Text(title).font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.text)
+      }
+      Text(detail)
+        .font(.system(size: 11))
+        .foregroundStyle(Palette.secondary)
+        .multilineTextAlignment(.center)
+    }
+    .frame(maxWidth: .infinity)
+    .padding(.vertical, 22)
+    .padding(.horizontal, 16)
+    .overlay(
+      RoundedRectangle(cornerRadius: 12)
+        .strokeBorder(Palette.border, style: StrokeStyle(lineWidth: 1, dash: [5, 4])))
+  }
+}
+
+// MARK: - Settings
+
+struct SettingsSheet: View {
   @EnvironmentObject var model: AppModel
-  @Binding var isPresented: Bool
+  @Environment(\.dismiss) private var dismiss
   @State private var name = ""
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 12) {
-      Text("Name others see").font(.headline)
-      TextField("Name", text: $name).frame(width: 280).onSubmit(save)
-      HStack {
-        Spacer()
-        Button("Cancel") { isPresented = false }
-        Button("Save", action: save).keyboardShortcut(.defaultAction)
+    VStack(alignment: .leading, spacing: 22) {
+      Text("Settings").font(.system(size: 16, weight: .semibold))
+
+      VStack(alignment: .leading, spacing: 8) {
+        SectionHeader("This device")
+        Card {
+          HStack(spacing: 12) {
+            Text("Name").font(.system(size: 13)).foregroundStyle(Palette.secondary).frame(width: 60, alignment: .leading)
+            TextField("Name", text: $name)
+              .textFieldStyle(.plain)
+              .font(.system(size: 13, weight: .medium))
+              .onSubmit { model.rename(name) }
+          }
+          .padding(12)
+          Hairline()
+          HStack {
+            VStack(alignment: .leading, spacing: 1) {
+              Text("Visible").font(.system(size: 13))
+              Text("Nearby devices can find you and send you things.")
+                .font(.system(size: 11))
+                .foregroundStyle(Palette.secondary)
+            }
+            Spacer()
+            Toggle("Visible", isOn: $model.visible)
+              .toggleStyle(MonoToggleStyle(small: false))
+              .labelsHidden()
+          }
+          .padding(12)
+        }
       }
-    }
-    .padding(20)
-    .onAppear { name = model.deviceName }
-  }
 
-  private func save() {
-    model.rename(name)
-    isPresented = false
-  }
-}
+      VStack(alignment: .leading, spacing: 8) {
+        SectionHeader("Linked devices")
+        Card {
+          ForEach(model.links) { link in
+            HStack(spacing: 10) {
+              DeviceGlyph(platform: link.platform, size: 26)
+              Text(link.name).font(.system(size: 13, weight: .medium)).lineLimit(1)
+              Spacer()
+              Button("Unlink") { model.unlink(link) }.buttonStyle(GhostButtonStyle())
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            Hairline()
+          }
+          Text(
+            (model.links.isEmpty
+              ? "No linked devices. Right-click a nearby device › Link Device… "
+              : "")
+              + "Text sent between linked devices goes straight to the clipboard. Files still ask first."
+          )
+          .font(.system(size: 11))
+          .foregroundStyle(Palette.secondary)
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .padding(12)
+        }
+      }
 
-struct SendTextSheet: View {
-  @EnvironmentObject var model: AppModel
-  @Environment(\.dismiss) private var dismiss
-  let peer: Peer
-  @State private var text = NSPasteboard.general.string(forType: .string) ?? ""
-
-  var body: some View {
-    VStack(alignment: .leading, spacing: 12) {
-      Text("Send text to \(peer.name)").font(.headline)
-      TextEditor(text: $text)
-        .font(.body)
-        .frame(width: 360, height: 140)
-        .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.secondary.opacity(0.3)))
       HStack {
         Spacer()
-        Button("Cancel") { dismiss() }
-        Button("Send") {
-          let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-          if !trimmed.isEmpty { model.send(text: trimmed, to: peer) }
+        Button("Done") {
+          model.rename(name)
           dismiss()
         }
+        .buttonStyle(PrimaryButtonStyle())
         .keyboardShortcut(.defaultAction)
       }
     }
-    .padding(20)
+    .padding(22)
+    .frame(width: 420)
+    .background(Palette.background)
+    .onAppear { name = model.deviceName }
   }
 }

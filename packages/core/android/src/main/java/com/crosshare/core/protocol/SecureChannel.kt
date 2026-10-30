@@ -48,6 +48,8 @@ sealed class Frame {
 /** Encrypted, framed messages over a Conn. See docs/PROTOCOL.md. */
 class SecureChannel private constructor(
   val conn: Conn,
+  /** SHA256(initiatorPub || responderPub): identifies this handshake. Identity signatures cover it. */
+  val transcript: ByteArray,
   private val sendKey: SecretKeySpec,
   private val recvKey: SecretKeySpec,
 ) {
@@ -92,6 +94,7 @@ class SecureChannel private constructor(
       val r2i = hkdf(shared, salt, "crosshare/v1/r2i")
       return SecureChannel(
         conn,
+        salt,
         SecretKeySpec(if (initiator) i2r else r2i, "AES"),
         SecretKeySpec(if (initiator) r2i else i2r, "AES"),
       )
@@ -119,6 +122,15 @@ class SecureChannel private constructor(
 
     fun encodePoint(key: ECPublicKey): ByteArray =
       byteArrayOf(4) + fixed32(key.w.affineX) + fixed32(key.w.affineY)
+
+    /** P-256 curve parameters, for decoding keys without a template. */
+    private val p256 by lazy {
+      val kpg = KeyPairGenerator.getInstance("EC")
+      kpg.initialize(ECGenParameterSpec("secp256r1"))
+      (kpg.generateKeyPair().public as ECPublicKey)
+    }
+
+    fun decodePoint(bytes: ByteArray): ECPublicKey = decodePoint(bytes, p256)
 
     private fun decodePoint(bytes: ByteArray, template: ECPublicKey): ECPublicKey {
       if (bytes.size != 65 || bytes[0] != 4.toByte()) throw ProtocolException("bad public key")

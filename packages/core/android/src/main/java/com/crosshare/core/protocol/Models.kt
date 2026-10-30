@@ -18,6 +18,9 @@ object Constants {
 
 data class LocalDevice(val id: String, val name: String, val platform: String = "android")
 
+/** A device both sides agreed to link. Text from it is accepted without asking. */
+data class LinkedDevice(val id: String, val name: String, val platform: String, val key: String)
+
 data class Peer(val id: String, val name: String, val platform: String, val routes: List<String>)
 
 enum class TransferStatus {
@@ -46,6 +49,12 @@ data class Transfer(
   /** "wifi", "bluetooth", "hotspot" or "aware" (Wi-Fi Aware). */
   val transport: String,
   val error: String?,
+  /** "transfer", "link" (a request to link the devices) or "unlink" (never shown to the user). */
+  val kind: String = "transfer",
+  /** Incoming text from a linked device, accepted without asking. */
+  val trusted: Boolean = false,
+  /** Link requests: six digits both devices show. The users confirm they match. */
+  val code: String? = null,
 ) {
   val totalBytes get() = files.sumOf { it.size }
   val transferredBytes get() = files.sumOf { it.transferred }
@@ -82,6 +91,16 @@ data class Msg(
   val method: String? = null,
   /** Wi-Fi Aware service name to subscribe to. */
   val service: String? = null,
+  /** hello: identity public key (hex) and its signature over the handshake (hex DER). */
+  val key: String? = null,
+  val sig: String? = null,
+  /** hello: whether the sender has the receiver linked. */
+  val linked: Boolean? = null,
+  /** offer: "link" or "unlink"; absent for a normal transfer. */
+  val kind: String? = null,
+  /** Link offers: SHA256 of the initiator's nonce, hex. linkNonce / linkReveal: a nonce, hex. */
+  val commit: String? = null,
+  val nonce: String? = null,
 ) {
   data class WireFile(val name: String, val size: Long, val mime: String?)
 
@@ -114,6 +133,12 @@ data class Msg(
     reason?.let { o.put("reason", it) }
     method?.let { o.put("method", it) }
     service?.let { o.put("service", it) }
+    key?.let { o.put("key", it) }
+    sig?.let { o.put("sig", it) }
+    linked?.let { o.put("linked", it) }
+    kind?.let { o.put("kind", it) }
+    commit?.let { o.put("commit", it) }
+    nonce?.let { o.put("nonce", it) }
     return o.toString().toByteArray(Charsets.UTF_8)
   }
 
@@ -144,6 +169,8 @@ data class Msg(
         transferId = str("transferId"), files = files, text = str("text"), ssid = str("ssid"),
         passphrase = str("passphrase"), host = str("host"), port = int("port"),
         token = str("token"), reason = str("reason"), method = str("method"), service = str("service"),
+        key = str("key"), sig = str("sig"), linked = bool("linked"), kind = str("kind"),
+        commit = str("commit"), nonce = str("nonce"),
       )
     }
   }

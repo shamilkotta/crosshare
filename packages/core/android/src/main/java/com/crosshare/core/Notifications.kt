@@ -63,21 +63,28 @@ object Notifications {
     ensureChannels(context)
     val n = NotificationCompat.Builder(context, CHANNEL_REQUESTS)
       .setSmallIcon(R.drawable.crosshare_notification)
-      .setContentTitle("${t.peerName} wants to share")
+      .setContentTitle(
+        when {
+          t.kind != "link" -> "${t.peerName} wants to share"
+          t.direction == "outgoing" -> "Confirm link with ${t.peerName}"
+          else -> "${t.peerName} wants to link"
+        },
+      )
       .setContentText(describe(t))
       .setStyle(NotificationCompat.BigTextStyle().bigText(describe(t)))
       .setContentIntent(openApp(context))
       .setPriority(NotificationCompat.PRIORITY_HIGH)
       .setCategory(NotificationCompat.CATEGORY_MESSAGE)
       .setOngoing(true)
-      .addAction(0, "Decline", action(context, NotificationActionReceiver.DECLINE, t.id))
-      .addAction(0, "Accept", action(context, NotificationActionReceiver.ACCEPT, t.id))
+      .addAction(0, if (t.kind == "link") "Cancel" else "Decline", action(context, NotificationActionReceiver.DECLINE, t.id))
+      .addAction(0, if (t.kind == "link") "Codes match" else "Accept", action(context, NotificationActionReceiver.ACCEPT, t.id))
       .build()
     lastPosted[t.id] = t.status to SystemClock.elapsedRealtime()
     post(context, t.id, TRANSFER_ID, n)
   }
 
   fun onTransferUpdate(context: Context, t: Transfer) {
+    if (t.kind == "unlink") return
     if (t.status.isFinal) {
       lastPosted.remove(t.id)
       val result = result(context, t)
@@ -133,7 +140,9 @@ object Notifications {
     val incoming = t.direction == "incoming"
     val (title, text) = when (t.status) {
       TransferStatus.completed ->
-        if (incoming) "Received from ${t.peerName}" to describe(t)
+        if (t.kind == "link") "Linked with ${t.peerName}" to "Text between you is now accepted automatically"
+        else if (incoming && t.files.isEmpty()) "Copied from ${t.peerName}" to describe(t)
+        else if (incoming) "Received from ${t.peerName}" to describe(t)
         else "Sent to ${t.peerName}" to describe(t)
       TransferStatus.failed ->
         (if (incoming) "Couldn't receive from ${t.peerName}" else "Couldn't send to ${t.peerName}") to
@@ -155,11 +164,14 @@ object Notifications {
   private fun describe(t: Transfer): String {
     val files = t.files
     return when {
+      t.kind == "link" -> "Check ${t.peerName} shows ${formatCode(t.code)}"
       files.isEmpty() -> t.text?.take(200) ?: "Text"
       files.size == 1 -> "${files[0].name} (${formatSize(files[0].size)})"
       else -> "${files.size} files (${formatSize(t.totalBytes)})"
     }
   }
+
+  fun formatCode(code: String?) = code?.let { "${it.take(3)} ${it.drop(3)}" } ?: ""
 
   private fun formatSize(bytes: Long): String = when {
     bytes < 1024 -> "$bytes B"

@@ -9,10 +9,13 @@ public protocol CrosshareEngineDelegate: AnyObject {
   /// "on", "off", "unauthorized", "unsupported" or "unknown".
   func engineDidUpdateBluetooth(state: String)
   func engineDidFail(_ message: String)
+  /// A device was linked, unlinked or renamed.
+  func engineDidUpdateLinks(_ links: [LinkedDevice])
 }
 
 public extension CrosshareEngineDelegate {
   func engineDidUpdateBluetooth(state: String) {}
+  func engineDidUpdateLinks(_ links: [LinkedDevice]) {}
   func engineDidFail(_ message: String) {}
 }
 
@@ -21,6 +24,7 @@ public final class CrosshareEngine: @unchecked Sendable {
   public weak var delegate: CrosshareEngineDelegate?
   public private(set) var device: LocalDevice
   public let storage: FileStorage
+  private let links = LinkStore()
 
   private let lan: LanTransport
   private let ble: BleTransport?
@@ -44,6 +48,10 @@ public final class CrosshareEngine: @unchecked Sendable {
     storage = FileStorage(downloads: downloads)
     lan = LanTransport(local: device)
     ble = bluetooth ? BleTransport(local: device) : nil
+
+    links.onChange = { [weak self] list in
+      DispatchQueue.main.async { self?.delegate?.engineDidUpdateLinks(list) }
+    }
 
     lan.onPeersChanged = { [weak self] found in
       self?.locked { self?.lanPeers = found }
@@ -165,9 +173,35 @@ public final class CrosshareEngine: @unchecked Sendable {
 
   // MARK: Transfers
 
+  // MARK: Linked devices
+
+  /// Devices this one is linked with. Text from them is accepted without asking.
+  public var linkedDevices: [LinkedDevice] { links.all }
+
+  /// Asks a nearby device to link. Both sides save the link once it accepts. Returns the transfer id.
+  @discardableResult
+  public func link(peerId: String) throws -> String {
+    try send(files: [], kind: .link, to: peerId)
+  }
+
+  /// Removes a link here and, if the device is nearby, tells it to remove its side too.
+  /// If it isn't nearby, it drops the link the next time the two devices connect.
+  public func unlink(id: String) {
+    guard links.unlink(id) != nil else { return }
+    _ = try? send(files: [], kind: .unlink, to: id)
+  }
+
+  // MARK: Transfers
+
   /// Sends files and/or text to a nearby device. Returns the transfer id.
   @discardableResult
   public func send(files: [OutgoingFile], text: String? = nil, to peerId: String) throws -> String {
+    try send(files: files, text: text, kind: .transfer, to: peerId)
+  }
+
+  private func send(
+    files: [OutgoingFile], text: String? = nil, kind: TransferKind, to peerId: String
+  ) throws -> String {
     let (lanPeer, blePeer, awareFound) = locked { (lanPeers[peerId], blePeers[peerId], awarePeer(id: peerId)) }
     let id = UUID().uuidString
     let peer = Peer(
@@ -177,17 +211,17 @@ public final class CrosshareEngine: @unchecked Sendable {
 
     if let lanPeer {
       let lan = lan
-      session.startOutgoing(files: files, text: text, route: "wifi") {
+      session.startOutgoing(files: files, text: text, kind: kind, route: "wifi") {
         try await lan.connect(to: lanPeer.endpoint)
       }
     } else if let awareFound {
       let aware = aware
       locked { awareKeyBySession[id] = awareFound.key }
-      session.startOutgoing(files: files, text: text, route: "aware") {
+      session.startOutgoing(files: files, text: text, kind: kind, route: "aware") {
         try await aware.connect(to: awareFound.endpoint)
       }
     } else if blePeer != nil, let ble {
-      session.startOutgoing(files: files, text: text, route: "bluetooth") {
+      session.startOutgoing(files: files, text: text, kind: kind, route: "bluetooth") {
         try await ble.connect(to: peerId)
       }
     } else {
@@ -239,7 +273,7 @@ public final class CrosshareEngine: @unchecked Sendable {
   }
 
   private func makeSession(id: String, direction: TransferDirection, peer: Peer?) -> TransferSession {
-    let session = TransferSession(id: id, local: device, direction: direction, peer: peer)
+    let session = TransferSession(id: id, local: device, links: links, direction: direction, peer: peer)
     session.onUpdate = { [weak self] transfer in
       guard let self else { return }
       self.learnAwareId(from: transfer)

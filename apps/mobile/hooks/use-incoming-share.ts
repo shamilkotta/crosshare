@@ -6,7 +6,7 @@ import { useCrosshare } from '@/context/crosshare-context';
 
 /**
  * Picks up files or text shared to Crosshare from another app (share sheet, "open with") and
- * opens the device picker with them selected.
+ * selects them on the home screen, ready to pick a device.
  */
 export function useIncomingShare() {
   const router = useRouter();
@@ -17,7 +17,7 @@ export function useIncomingShare() {
       const shared = Crosshare.getSharedItems();
       if (!shared || (shared.files.length === 0 && !shared.text)) return;
       setSelection(shared);
-      router.navigate('/searching');
+      router.navigate('/');
     };
     check();
     // Android reports new shares with an event; iOS opens crosshare://share from its extension.

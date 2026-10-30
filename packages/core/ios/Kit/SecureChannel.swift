@@ -9,6 +9,8 @@ enum Frame {
 /// Encrypted, framed messages over a ByteStream. See docs/PROTOCOL.md.
 final class SecureChannel: @unchecked Sendable {
   let stream: ByteStream
+  /// SHA256(initiatorPub || responderPub): identifies this handshake. Identity signatures cover it.
+  let transcript: Data
   private let sendKey: SymmetricKey
   private let recvKey: SymmetricKey
   private let lock = NSLock()
@@ -19,8 +21,9 @@ final class SecureChannel: @unchecked Sendable {
   private static let frameMessage: UInt8 = 1
   private static let frameData: UInt8 = 2
 
-  private init(stream: ByteStream, sendKey: SymmetricKey, recvKey: SymmetricKey) {
+  private init(stream: ByteStream, transcript: Data, sendKey: SymmetricKey, recvKey: SymmetricKey) {
     self.stream = stream
+    self.transcript = transcript
     self.sendKey = sendKey
     self.recvKey = recvKey
   }
@@ -45,7 +48,7 @@ final class SecureChannel: @unchecked Sendable {
     let i2r = key("crosshare/v1/i2r")
     let r2i = key("crosshare/v1/r2i")
     return SecureChannel(
-      stream: stream, sendKey: initiator ? i2r : r2i, recvKey: initiator ? r2i : i2r)
+      stream: stream, transcript: salt, sendKey: initiator ? i2r : r2i, recvKey: initiator ? r2i : i2r)
   }
 
   private static func nonce(_ counter: UInt64) -> AES.GCM.Nonce {

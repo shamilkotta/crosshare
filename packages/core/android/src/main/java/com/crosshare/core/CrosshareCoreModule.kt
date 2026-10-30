@@ -5,9 +5,11 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.OpenableColumns
+import com.crosshare.core.protocol.LinkedDevice
 import com.crosshare.core.protocol.OutgoingFile
 import com.crosshare.core.protocol.Peer
 import com.crosshare.core.protocol.Transfer
+import expo.modules.kotlin.exception.CodedException
 import expo.modules.kotlin.exception.Exceptions
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
@@ -41,6 +43,10 @@ class CrosshareCoreModule : Module() {
     override fun onBluetoothState(state: String) {
       sendEvent("onBluetoothState", mapOf("state" to state))
     }
+
+    override fun onLinksChanged(links: List<LinkedDevice>) {
+      sendEvent("onLinksChanged", mapOf("links" to links.map(::linkMap)))
+    }
   }
 
   override fun definition() = ModuleDefinition {
@@ -48,7 +54,7 @@ class CrosshareCoreModule : Module() {
 
     Events(
       "onPeersChanged", "onTransferRequest", "onTransferUpdate", "onBluetoothState", "onShareReceived",
-      "onVisibilityChanged",
+      "onVisibilityChanged", "onLinksChanged",
     )
 
     Function("getDeviceInfo") {
@@ -92,6 +98,12 @@ class CrosshareCoreModule : Module() {
       engine().send(outgoing, text, peerId)
     }
 
+    Function("getLinkedDevices") { engine().linkedDevices.map(::linkMap) }
+
+    AsyncFunction("link") { peerId: String -> engine().link(peerId) }
+
+    Function("unlink") { id: String -> engine().unlink(id) }
+
     /** Transfers in progress, e.g. ones that started while the app was closed. */
     Function("getActiveTransfers") { CrosshareRuntime.activeTransfers.map(::transferMap) }
 
@@ -101,13 +113,21 @@ class CrosshareCoreModule : Module() {
 
     Function("openFile") { uri: String, mime: String? ->
       val parsed = Uri.parse(uri)
+      val exists = runCatching {
+        context.contentResolver.openFileDescriptor(parsed, "r")?.use { true } ?: false
+      }.getOrDefault(false)
+      if (!exists) throw CodedException("ERR_FILE_NOT_FOUND", "File no longer exists", null)
       val type = mime ?: context.contentResolver.getType(parsed) ?: "*/*"
       val view = Intent(Intent.ACTION_VIEW).apply {
         setDataAndType(parsed, type)
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
       }
       val chooser = Intent.createChooser(view, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-      (appContext.currentActivity ?: context).startActivity(chooser)
+      try {
+        (appContext.currentActivity ?: context).startActivity(chooser)
+      } catch (e: android.content.ActivityNotFoundException) {
+        throw CodedException("ERR_NO_APP", "No app can open this file", e)
+      }
     }
 
     /** Files or text another app shared to Crosshare (or opened with it), once. */
@@ -231,6 +251,8 @@ class CrosshareCoreModule : Module() {
     "id" to p.id, "name" to p.name, "platform" to p.platform, "routes" to p.routes,
   )
 
+  private fun linkMap(d: LinkedDevice) = mapOf("id" to d.id, "name" to d.name, "platform" to d.platform)
+
   private fun transferMap(t: Transfer) = mapOf(
     "id" to t.id,
     "direction" to t.direction,
@@ -242,6 +264,9 @@ class CrosshareCoreModule : Module() {
       mapOf("name" to it.name, "size" to it.size.toDouble(), "transferred" to it.transferred.toDouble(), "uri" to it.savedUri)
     },
     "text" to t.text,
+    "kind" to t.kind,
+    "trusted" to t.trusted,
+    "code" to t.code,
     "transport" to t.transport,
     "error" to t.error,
     "totalBytes" to t.totalBytes.toDouble(),

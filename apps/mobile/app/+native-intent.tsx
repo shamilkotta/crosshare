@@ -5,6 +5,6 @@ export function redirectSystemPath({
   path: string;
   initial: boolean;
 }) {
-  if (/^([\w+.-]+:\/\/)?\/?share(\?|\/|$)/.test(path)) return '/searching';
+  if (/^([\w+.-]+:\/\/)?\/?share(\?|\/|$)/.test(path)) return '/';
   return path;
 }

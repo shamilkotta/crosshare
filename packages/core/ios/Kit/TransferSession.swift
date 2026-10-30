@@ -5,6 +5,7 @@ import Network
 final class TransferSession: @unchecked Sendable {
   let id: String
   private let local: LocalDevice
+  private let links: LinkStore
   private let lock = NSLock()
   private var state: Transfer
   private var channel: SecureChannel?
@@ -24,13 +25,42 @@ final class TransferSession: @unchecked Sendable {
     return state
   }
 
-  init(id: String, local: LocalDevice, direction: TransferDirection, peer: Peer?) {
+  init(id: String, local: LocalDevice, links: LinkStore, direction: TransferDirection, peer: Peer?) {
     self.id = id
     self.local = local
+    self.links = links
     state = Transfer(
       id: id, direction: direction,
       peerId: peer?.id ?? "", peerName: peer?.name ?? "", peerPlatform: peer?.platform ?? .ios,
-      status: .connecting, files: [], text: nil, transport: "wifi", error: nil)
+      status: .connecting, files: [], text: nil, kind: .transfer, trusted: false, code: nil, transport: "wifi",
+      error: nil)
+  }
+
+  // MARK: Identity
+
+  /// Our hello, signed for this handshake. `peerId` is who we think we're talking to.
+  private func hello(on ch: SecureChannel, initiator: Bool, peerId: String?) -> Msg {
+    var m = Msg.hello(local)
+    m.key = links.publicKey
+    m.sig = links.sign(transcript: ch.transcript, initiator: initiator)
+    if let peerId, !peerId.isEmpty { m.linked = links.isLinked(peerId) }
+    return m
+  }
+
+  /// Verifies the peer's hello and lets the link store react to it. Returns the peer's proven key.
+  private func verify(_ hello: Msg, on ch: SecureChannel, peerIsInitiator: Bool) -> String? {
+    let key = LinkStore.verify(hello, transcript: ch.transcript, initiator: peerIsInitiator)
+    if let id = hello.id {
+      links.observe(
+        id: id, name: hello.name ?? "Unknown device",
+        platform: CSPlatform(rawValue: hello.platform ?? "") ?? .ios, key: key, theyLinkUs: hello.linked)
+    }
+    return key
+  }
+
+  private func linkPeer(key: String) {
+    let t = snapshot
+    links.link(LinkedDevice(id: t.peerId, name: t.peerName, platform: t.peerPlatform, key: key))
   }
 
   // MARK: State
@@ -90,12 +120,13 @@ final class TransferSession: @unchecked Sendable {
   // MARK: Outgoing
 
   func startOutgoing(
-    files: [OutgoingFile], text: String?, route: String,
+    files: [OutgoingFile], text: String?, kind: TransferKind = .transfer, route: String,
     connect: @escaping () async throws -> ByteStream
   ) {
     mutate {
       $0.files = files.map { TransferFile(name: $0.name, size: $0.size, transferred: 0) }
       $0.text = text
+      $0.kind = kind
       $0.transport = route
     }
     task = Task { [self] in
@@ -122,28 +153,44 @@ final class TransferSession: @unchecked Sendable {
     channel = ch
     if isFinal { ch.close(); return }
 
-    try await ch.send(Msg.hello(local))
+    try await ch.send(self.hello(on: ch, initiator: true, peerId: snapshot.peerId))
     let hello = try await withTimeout(20) { try await ch.receiveMessage() }
     guard hello.t == "hello" else { throw CSError.protocolError("expected hello") }
+    let peerKey = verify(hello, on: ch, peerIsInitiator: false)
     mutate {
       $0.peerId = hello.id ?? $0.peerId
       $0.peerName = hello.name ?? $0.peerName
+      $0.peerPlatform = CSPlatform(rawValue: hello.platform ?? "") ?? $0.peerPlatform
+    }
+    let kind = snapshot.kind
+    if kind == .link, peerKey == nil {
+      throw CSError.unreachable("\(snapshot.peerName) needs to update Crosshare to link")
     }
 
     var offer = Msg("offer")
     offer.transferId = id
     offer.files = files.map { WireFile(name: $0.name, size: $0.size, mime: $0.mime) }
     offer.text = text
+    offer.kind = kind == .transfer ? nil : kind.rawValue
+    let ownNonce = LinkStore.nonce()
+    if kind == .link { offer.commit = LinkStore.commitment(ownNonce) }
     try await ch.send(offer)
     mutate { $0.status = .waiting }
 
-    // The receiver has up to two minutes to decide.
-    let answer = try await withTimeout(150) { try await ch.receiveMessage() }
+    let answer: Msg
+    if kind == .link, let peerKey {
+      guard let a = try await confirmLink(on: ch, ownNonce: ownNonce, peerKey: peerKey) else { return }
+      answer = a
+    } else {
+      // The receiver has up to two minutes to decide.
+      answer = try await withTimeout(150) { try await ch.receiveMessage() }
+    }
     if answer.t == "decline" {
       finish(.declined)
       return
     }
     guard answer.t == "accept" else { throw CSError.protocolError("expected accept") }
+    if kind == .link, let peerKey { linkPeer(key: peerKey) }
 
     var current = ch
     let total = files.reduce(Int64(0)) { $0 + $1.size }
@@ -206,6 +253,46 @@ final class TransferSession: @unchecked Sendable {
     finish(.completed)
   }
 
+  /// Initiator side of the link code: swap nonces, show the code, and wait for both this user's
+  /// confirmation and the peer's answer. Returns the peer's answer, or nil if this side gave up.
+  private func confirmLink(on ch: SecureChannel, ownNonce: Data, peerKey: String) async throws -> Msg? {
+    let reply = try await withTimeout(20) { try await ch.receiveMessage() }
+    if reply.t == "decline" { return reply }
+    guard reply.t == "linkNonce", let peerNonce = reply.nonce.flatMap(Data.init(hex:)), peerNonce.count == 32 else {
+      throw CSError.protocolError("expected linkNonce")
+    }
+    var reveal = Msg("linkReveal")
+    reveal.nonce = ownNonce.hex
+    try await ch.send(reveal)
+    let code = LinkStore.code(
+      transcript: ch.transcript, initiatorKey: links.publicKey, responderKey: peerKey,
+      initiatorNonce: ownNonce, responderNonce: peerNonce)
+    mutate { $0.code = code }
+
+    // The peer's answer can arrive before or after this user confirms; a decline dismisses the prompt.
+    let answerTask = Task { try await withTimeout(150) { try await ch.receiveMessage() } }
+    Task {
+      if case .success(let m) = await answerTask.result, m.t == "accept" { return }
+      self.resolveDecision(false)
+    }
+    let confirmed: Bool = await withCheckedContinuation { cont in
+      let once = Once()
+      lock.lock()
+      decision = { value in if once.claim() { cont.resume(returning: value) } }
+      lock.unlock()
+      DispatchQueue.global().asyncAfter(deadline: .now() + 120) { self.resolveDecision(false) }
+      onRequest?(snapshot)
+    }
+    if isFinal { return nil }
+    if !confirmed {
+      if case .success(let m) = await answerTask.result, m.t == "decline" { return m }
+      try? await ch.send(Msg("cancel"))
+      finish(.cancelled)
+      return nil
+    }
+    return try await answerTask.value
+  }
+
   // MARK: Incoming
 
   func startIncoming(stream: ByteStream, route: String, storage: FileStorage) {
@@ -231,24 +318,53 @@ final class TransferSession: @unchecked Sendable {
     channel = ch
     let hello = try await withTimeout(20) { try await ch.receiveMessage() }
     guard hello.t == "hello" else { throw CSError.protocolError("expected hello") }
-    try await ch.send(Msg.hello(local))
+    let peerKey = verify(hello, on: ch, peerIsInitiator: true)
+    try await ch.send(self.hello(on: ch, initiator: false, peerId: hello.id))
 
     let offer = try await withTimeout(20) { try await ch.receiveMessage() }
     guard offer.t == "offer" else { throw CSError.protocolError("expected offer") }
     let wireFiles = offer.files ?? []
+    let kind = TransferKind(rawValue: offer.kind ?? "") ?? .transfer
+    let peerId = hello.id ?? ""
+    // Text from a linked device that proved its identity skips the prompt.
+    let trusted = kind == .transfer && wireFiles.isEmpty && offer.text != nil
+      && links.isTrusted(peerId, key: peerKey)
     mutate {
-      $0.peerId = hello.id ?? ""
+      $0.peerId = peerId
       $0.peerName = hello.name ?? "Unknown device"
       $0.peerPlatform = CSPlatform(rawValue: hello.platform ?? "") ?? .ios
       $0.files = wireFiles.map { TransferFile(name: $0.name, size: max(0, $0.size), transferred: 0) }
       $0.text = offer.text
+      $0.kind = kind
+      $0.trusted = trusted
       $0.status = .waiting
+    }
+
+    // The peer removed the link (the hello already dropped ours), or can't prove who it is.
+    if kind == .unlink || (kind == .link && (peerKey == nil || offer.commit == nil)) {
+      try? await ch.send(Msg("decline"))
+      finish(.declined)
+      return
+    }
+    if kind == .link, let peerKey, let commit = offer.commit {
+      let ownNonce = LinkStore.nonce()
+      var msg = Msg("linkNonce")
+      msg.nonce = ownNonce.hex
+      try await ch.send(msg)
+      let reveal = try await withTimeout(20) { try await ch.receiveMessage() }
+      guard reveal.t == "linkReveal", let peerNonce = reveal.nonce.flatMap(Data.init(hex:)),
+        LinkStore.commitment(peerNonce) == commit
+      else { throw CSError.protocolError("link nonce doesn't match its commitment") }
+      let code = LinkStore.code(
+        transcript: ch.transcript, initiatorKey: peerKey, responderKey: links.publicKey,
+        initiatorNonce: peerNonce, responderNonce: ownNonce)
+      mutate { $0.code = code }
     }
 
     // Read the next frame while the user decides, so a sender cancel dismisses the prompt.
     let firstFrame = Task { () -> Frame in try await ch.receive() }
     let senderGone = Once()
-    let accepted: Bool = await withCheckedContinuation { cont in
+    let accepted: Bool = trusted ? true : await withCheckedContinuation { cont in
       let once = Once()
       let resolve: (Bool) -> Void = { value in if once.claim() { cont.resume(returning: value) } }
       lock.lock()
@@ -317,6 +433,8 @@ final class TransferSession: @unchecked Sendable {
           try await current.send(Msg("upgradeFailed"))
         case "done":
           guard index >= wireFiles.count else { throw CSError.protocolError("transfer ended early") }
+          // The initiator only sends "done" once its user confirmed the code too.
+          if kind == .link, let peerKey { linkPeer(key: peerKey) }
           let urls = try storage.finish(transferId: id, sink: sink)
           mutate {
             for (i, url) in urls.enumerated() where i < $0.files.count {

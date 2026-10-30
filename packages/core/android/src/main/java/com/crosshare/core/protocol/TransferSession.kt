@@ -57,6 +57,7 @@ class TransferSession(
   private val upgrade: Upgrade,
   private val onUpdate: (Transfer) -> Unit,
   private val onRequest: (Transfer) -> Unit = {},
+  private val trust: Trust = NoTrust,
 ) {
   private val lock = Object()
   private var state = Transfer(
@@ -126,11 +127,37 @@ class TransferSession(
     }, name).apply { start() }
   }
 
+  // Identity
+
+  /** Our hello, signed for this handshake. `peerId` is who we think we're talking to. */
+  private fun hello(ch: SecureChannel, initiator: Boolean, peerId: String?): Msg {
+    val identity = trust.identity
+    return Msg.hello(local, upgrade.canHost, upgrade.canJoin, upgrade.canAware).copy(
+      key = identity?.publicKey,
+      sig = identity?.sign(ch.transcript, initiator),
+      linked = peerId?.takeIf { it.isNotEmpty() && identity != null }?.let(trust::isLinked),
+    )
+  }
+
+  /** Verifies the peer's hello and lets the link store react to it. Returns the peer's proven key. */
+  private fun verify(hello: Msg, ch: SecureChannel, peerIsInitiator: Boolean): String? {
+    val key = Identity.verify(hello, ch.transcript, peerIsInitiator)
+    hello.id?.let { trust.observe(it, hello.name ?: "Unknown device", hello.platform ?: "android", key, hello.linked) }
+    return key
+  }
+
+  private fun linkPeer(key: String) {
+    val t = snapshot
+    trust.link(LinkedDevice(t.peerId, t.peerName, t.peerPlatform, key))
+  }
+
   // Outgoing
 
-  fun startOutgoing(files: List<OutgoingFile>, text: String?, route: String, connect: () -> Conn) {
+  fun startOutgoing(
+    files: List<OutgoingFile>, text: String?, route: String, kind: String = "transfer", connect: () -> Conn,
+  ) {
     mutate {
-      it.copy(files = files.map { f -> TransferFile(f.name, f.size) }, text = text, transport = route)
+      it.copy(files = files.map { f -> TransferFile(f.name, f.size) }, text = text, transport = route, kind = kind)
     }
     run("crosshare-send", { runOutgoing(files, text, route == "bluetooth", connect) })
   }
@@ -144,26 +171,44 @@ class TransferSession(
       return
     }
 
-    ch.send(Msg.hello(local, upgrade.canHost, upgrade.canJoin, upgrade.canAware))
+    ch.send(this.hello(ch, initiator = true, peerId = snapshot.peerId))
     val hello = ch.receiveMessage(20_000)
     if (hello.t != "hello") throw ProtocolException("expected hello")
-    mutate { it.copy(peerId = hello.id ?: it.peerId, peerName = hello.name ?: it.peerName) }
+    val peerKey = verify(hello, ch, peerIsInitiator = false)
+    mutate {
+      it.copy(
+        peerId = hello.id ?: it.peerId, peerName = hello.name ?: it.peerName,
+        peerPlatform = hello.platform ?: it.peerPlatform,
+      )
+    }
+    val kind = snapshot.kind
+    if (kind == "link" && peerKey == null) {
+      throw IllegalStateException("${snapshot.peerName} needs to update Crosshare to link")
+    }
 
+    val ownNonce = Identity.nonce()
     ch.send(
       Msg(
         "offer", transferId = id, text = text,
         files = files.map { Msg.WireFile(it.name, it.size, it.mime) },
+        kind = kind.takeIf { it != "transfer" },
+        commit = if (kind == "link") Identity.commitment(ownNonce) else null,
       ),
     )
     mutate { it.copy(status = TransferStatus.waiting) }
 
-    // The receiver has up to two minutes to decide.
-    val answer = ch.receiveMessage(150_000)
+    val answer = if (kind == "link" && peerKey != null) {
+      confirmLink(ch, ownNonce, peerKey) ?: return
+    } else {
+      // The receiver has up to two minutes to decide.
+      ch.receiveMessage(150_000)
+    }
     if (answer.t == "decline") {
       finish(TransferStatus.declined)
       return
     }
     if (answer.t != "accept") throw ProtocolException("expected accept")
+    if (kind == "link" && peerKey != null) linkPeer(peerKey)
 
     var current = ch
     val total = files.sumOf { it.size }
@@ -226,6 +271,44 @@ class TransferSession(
     finish(TransferStatus.completed)
   }
 
+  /**
+   * Initiator side of the link code: swap nonces, show the code, and wait for both this user's
+   * confirmation and the peer's answer. Returns the peer's answer, or null if this side gave up.
+   */
+  private fun confirmLink(ch: SecureChannel, ownNonce: ByteArray, peerKey: String): Msg? {
+    val reply = ch.receiveMessage(20_000)
+    if (reply.t == "decline") return reply
+    val peerNonce = reply.nonce?.unhex()
+    if (reply.t != "linkNonce" || peerNonce == null || peerNonce.size != 32) {
+      throw ProtocolException("expected linkNonce")
+    }
+    ch.send(Msg("linkReveal", nonce = ownNonce.hex()))
+    val code = Identity.code(ch.transcript, trust.identity!!.publicKey, peerKey, ownNonce, peerNonce)
+    mutate { it.copy(code = code) }
+    onRequest(snapshot)
+
+    // The peer's answer can arrive before or after this user confirms; a decline dismisses the prompt.
+    var answer: Msg? = null
+    val deadline = System.currentTimeMillis() + 120_000
+    while (decision == null) {
+      if (System.currentTimeMillis() > deadline) respond(false)
+      val frame = ch.poll(200)
+      if (frame is Frame.Message) {
+        answer = frame.msg
+        if (frame.msg.t != "accept") respond(false)
+      }
+    }
+    if (isFinal) return null
+    if (decision != true) {
+      if (answer?.t == "decline") return answer
+      if (answer?.t == "cancel") throw CancelledException()
+      runCatching { ch.send(Msg("cancel")) }
+      finish(TransferStatus.cancelled)
+      return null
+    }
+    return answer ?: ch.receiveMessage(150_000)
+  }
+
   /** Throws if the receiver sent "cancel" (or the link dropped) while we were streaming. */
   private fun checkForCancel(ch: SecureChannel) {
     val frame = ch.poll(0) ?: return
@@ -249,20 +332,43 @@ class TransferSession(
     channel = ch
     val hello = ch.receiveMessage(20_000)
     if (hello.t != "hello") throw ProtocolException("expected hello")
-    ch.send(Msg.hello(local, upgrade.canHost, upgrade.canJoin, upgrade.canAware))
+    val peerKey = verify(hello, ch, peerIsInitiator = true)
+    ch.send(this.hello(ch, initiator = false, peerId = hello.id))
 
     val offer = ch.receiveMessage(20_000)
     if (offer.t != "offer") throw ProtocolException("expected offer")
     val wireFiles = offer.files ?: emptyList()
+    val kind = offer.kind?.takeIf { it == "link" || it == "unlink" } ?: "transfer"
+    val peerId = hello.id ?: ""
+    // Text from a linked device that proved its identity skips the prompt.
+    val trusted = kind == "transfer" && wireFiles.isEmpty() && offer.text != null && trust.isTrusted(peerId, peerKey)
     mutate {
       it.copy(
-        peerId = hello.id ?: "", peerName = hello.name ?: "Unknown device",
+        peerId = peerId, peerName = hello.name ?: "Unknown device",
         peerPlatform = hello.platform ?: "android",
         files = wireFiles.map { f -> TransferFile(f.name, maxOf(0L, f.size)) },
-        text = offer.text, status = TransferStatus.waiting,
+        text = offer.text, status = TransferStatus.waiting, kind = kind, trusted = trusted,
       )
     }
-    onRequest(snapshot)
+
+    // The peer removed the link (the hello already dropped ours), or can't prove who it is.
+    if (kind == "unlink" || (kind == "link" && (peerKey == null || offer.commit == null))) {
+      runCatching { ch.send(Msg("decline")) }
+      finish(TransferStatus.declined)
+      return
+    }
+    if (kind == "link" && peerKey != null) {
+      val ownNonce = Identity.nonce()
+      ch.send(Msg("linkNonce", nonce = ownNonce.hex()))
+      val reveal = ch.receiveMessage(20_000)
+      val peerNonce = reveal.nonce?.unhex()
+      if (reveal.t != "linkReveal" || peerNonce == null || Identity.commitment(peerNonce) != offer.commit) {
+        throw ProtocolException("link nonce doesn't match its commitment")
+      }
+      val code = Identity.code(ch.transcript, peerKey, trust.identity!!.publicKey, peerNonce, ownNonce)
+      mutate { it.copy(code = code) }
+    }
+    if (trusted) respond(true) else onRequest(snapshot)
 
     // Wait for the user, watching for the sender giving up.
     var pending: Frame? = null
@@ -343,6 +449,8 @@ class TransferSession(
           }
           "done" -> {
             if (index < wireFiles.size) throw ProtocolException("transfer ended early")
+            // The initiator only sends "done" once its user confirmed the code too.
+            if (kind == "link" && peerKey != null) linkPeer(peerKey)
             val saved = sink.finish()
             mutate { t ->
               t.copy(files = t.files.mapIndexed { i, f -> f.copy(savedUri = saved.getOrNull(i)) })
