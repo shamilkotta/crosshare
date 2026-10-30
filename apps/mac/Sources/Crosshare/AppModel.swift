@@ -153,16 +153,8 @@ final class AppModel: ObservableObject, CrosshareEngineDelegate {
     let request = UNNotificationRequest(identifier: transfer.id, content: content, trigger: nil)
     let center = UNUserNotificationCenter.current()
     center.getNotificationSettings { settings in
-      let allowed = settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional
-      DispatchQueue.main.async {
-        if allowed {
-          center.add(request) { error in
-            if error != nil { DispatchQueue.main.async { RequestToast.show(transfer) } }
-          }
-        } else {
-          RequestToast.show(transfer)
-        }
-      }
+      guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional else { return }
+      center.add(request)
     }
   }
 
@@ -184,7 +176,6 @@ final class AppModel: ObservableObject, CrosshareEngineDelegate {
 
   private func upsert(_ t: Transfer) {
     if t.status != .waiting {
-      RequestToast.dismiss(t.id)
       UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [t.id])
     }
     if let i = transfers.firstIndex(where: { $0.id == t.id }) {
