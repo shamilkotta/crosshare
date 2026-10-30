@@ -18,7 +18,8 @@ swift build                          # builds the Swift engine and cs-cli
 .build/debug/cs-cli send --port 47001 some-file
 ```
 
-The Android unit tests run the Kotlin engine against itself and against `cs-cli`:
+The Android unit tests run the Kotlin engine against itself and against `cs-cli`. Run them from the
+repo root after `npx expo prebuild` in `apps/mobile`:
 
 ```sh
 cd apps/mobile/android
