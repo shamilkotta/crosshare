@@ -7,6 +7,7 @@ import {
   OutgoingFile,
   Peer,
   SharedItems,
+  Transfer,
 } from './CrosshareCore.types';
 
 declare class CrosshareCoreModule extends NativeModule<CrosshareEvents> {
@@ -16,6 +17,8 @@ declare class CrosshareCoreModule extends NativeModule<CrosshareEvents> {
   requiredPermissions(): string[];
   /** Be discoverable and accept incoming requests. */
   setVisible(on: boolean): void;
+  /** Android: saved visibility, shared with the Quick Settings tile. */
+  isVisible?(): boolean;
   /** Look for nearby devices; results arrive via onPeersChanged. */
   setDiscovering(on: boolean): void;
   /** Re-checks permissions and Bluetooth (call after granting permissions). */
@@ -40,6 +43,8 @@ declare class CrosshareCoreModule extends NativeModule<CrosshareEvents> {
    * Call on launch, when the app becomes active, and on onShareReceived.
    */
   getSharedItems(): SharedItems | null;
+  /** Android: transfers in progress, including ones that started while the app was closed. */
+  getActiveTransfers?(): Transfer[];
   respond(transferId: string, accept: boolean): void;
   cancel(transferId: string): void;
   /** Opens (Android) or shares (iOS) a received file. */

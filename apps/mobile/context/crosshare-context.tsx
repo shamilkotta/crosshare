@@ -88,6 +88,10 @@ function saveSettings(s: Settings) {
 async function ensurePermissions() {
   if (Platform.OS !== 'android') return;
   const needed = Crosshare.requiredPermissions() as any[];
+  // Requests and progress show as notifications while the app is in the background.
+  if (Platform.Version >= 33) {
+    needed.push(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+  }
   if (needed.length === 0) return;
   await PermissionsAndroid.requestMultiple(needed);
   Crosshare.refresh();
@@ -102,8 +106,13 @@ export function CrosshareProvider({ children }: { children: React.ReactNode }) {
   const [bluetooth, setBluetooth] = useState<BluetoothState>(() =>
     Crosshare.getBluetoothState()
   );
-  const [visible, setVisibleState] = useState(initial.visible);
-  const [transfers, setTransfers] = useState<Transfer[]>([]);
+  // On Android the native side owns visibility, so the Quick Settings tile and the app agree.
+  const [visible, setVisibleState] = useState(
+    () => Crosshare.isVisible?.() ?? initial.visible
+  );
+  const [transfers, setTransfers] = useState<Transfer[]>(
+    () => Crosshare.getActiveTransfers?.() ?? []
+  );
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [selection, setSelection] = useState<Selection | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>(initial.history);
@@ -156,12 +165,18 @@ export function CrosshareProvider({ children }: { children: React.ReactNode }) {
       Crosshare.addListener('onTransferRequest', upsert),
       Crosshare.addListener('onTransferUpdate', upsert),
       Crosshare.addListener('onBluetoothState', (e) => setBluetooth(e.state)),
+      Crosshare.addListener('onVisibilityChanged', (e) =>
+        setVisibleState(e.visible)
+      ),
     ];
     ensurePermissions().then(() => {
-      Crosshare.setVisible(initial.visible);
+      Crosshare.setVisible(Crosshare.isVisible?.() ?? initial.visible);
     });
     const appState = AppState.addEventListener('change', (state) => {
-      if (state === 'active') Crosshare.refresh();
+      if (state !== 'active') return;
+      Crosshare.refresh();
+      // Answered or started from a notification while the app was in the background.
+      Crosshare.getActiveTransfers?.().forEach(upsert);
     });
     return () => {
       subs.forEach((s) => s.remove());

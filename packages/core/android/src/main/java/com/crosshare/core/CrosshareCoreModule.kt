@@ -1,18 +1,10 @@
 package com.crosshare.core
 
-import android.Manifest
-import android.bluetooth.BluetoothAdapter
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.OpenableColumns
-import android.provider.Settings
-import androidx.core.content.ContextCompat
-import com.crosshare.core.protocol.LocalDevice
 import com.crosshare.core.protocol.OutgoingFile
 import com.crosshare.core.protocol.Peer
 import com.crosshare.core.protocol.Transfer
@@ -21,41 +13,61 @@ import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 import java.io.File
 import java.io.FileInputStream
-import java.util.UUID
 
 class CrosshareCoreModule : Module() {
-  private var engine: CrosshareEngine? = null
-  private var bluetoothReceiver: BroadcastReceiver? = null
   private var pendingShare: Map<String, Any?>? = null
   private var handledIntent: Intent? = null
 
   private val context: Context
     get() = appContext.reactContext?.applicationContext ?: throw Exceptions.ReactContextLost()
 
-  private val prefs get() = context.getSharedPreferences("crosshare", Context.MODE_PRIVATE)
+  private val listener = object : CrosshareRuntime.Listener {
+    override fun onPeersChanged(peers: List<Peer>) {
+      sendEvent("onPeersChanged", mapOf("peers" to peers.map(::peerMap)))
+    }
+
+    override fun onRequest(transfer: Transfer) {
+      sendEvent("onTransferRequest", transferMap(transfer))
+    }
+
+    override fun onTransferUpdate(transfer: Transfer) {
+      sendEvent("onTransferUpdate", transferMap(transfer))
+    }
+
+    override fun onVisibilityChanged(visible: Boolean) {
+      sendEvent("onVisibilityChanged", mapOf("visible" to visible))
+    }
+
+    override fun onBluetoothState(state: String) {
+      sendEvent("onBluetoothState", mapOf("state" to state))
+    }
+  }
 
   override fun definition() = ModuleDefinition {
     Name("CrosshareCore")
 
-    Events("onPeersChanged", "onTransferRequest", "onTransferUpdate", "onBluetoothState", "onShareReceived")
+    Events(
+      "onPeersChanged", "onTransferRequest", "onTransferUpdate", "onBluetoothState", "onShareReceived",
+      "onVisibilityChanged",
+    )
 
     Function("getDeviceInfo") {
-      val d = localDevice()
+      val d = CrosshareRuntime.localDevice()
       mapOf("id" to d.id, "name" to d.name, "platform" to d.platform)
     }
 
     Function("setDeviceName") { name: String ->
       val trimmed = name.trim().take(60)
-      if (trimmed.isNotEmpty()) {
-        prefs.edit().putString("name", trimmed).apply()
-        engine?.rename(trimmed)
-      }
+      if (trimmed.isNotEmpty()) CrosshareRuntime.setDeviceName(trimmed)
     }
 
     /** Runtime permissions the app should request before going visible or scanning. */
-    Function("requiredPermissions") { requiredPermissions() }
+    Function("requiredPermissions") { CrosshareRuntime.requiredPermissions() }
 
-    Function("setVisible") { on: Boolean -> engine().setVisible(on) }
+    Function("setVisible") { on: Boolean -> CrosshareRuntime.setVisible(on) }
+
+    /** Saved visibility, shared with the Quick Settings tile. */
+    Function("isVisible") { CrosshareRuntime.isVisible }
 
     Function("setDiscovering") { on: Boolean -> engine().setDiscovering(on) }
 
@@ -64,7 +76,6 @@ class CrosshareCoreModule : Module() {
       engine().refreshBluetooth()
       sendEvent("onBluetoothState", mapOf("state" to engine().bluetoothState))
     }
-
     Function("getPeers") { engine().peers.map(::peerMap) }
 
     Function("getBluetoothState") { engine().bluetoothState }
@@ -80,6 +91,9 @@ class CrosshareCoreModule : Module() {
       val outgoing = files.map { outgoingFile(it) }
       engine().send(outgoing, text, peerId)
     }
+
+    /** Transfers in progress, e.g. ones that started while the app was closed. */
+    Function("getActiveTransfers") { CrosshareRuntime.activeTransfers.map(::transferMap) }
 
     Function("respond") { transferId: String, accept: Boolean -> engine().respond(transferId, accept) }
 
@@ -107,22 +121,14 @@ class CrosshareCoreModule : Module() {
     }
 
     OnCreate {
-      val receiver = object : BroadcastReceiver() {
-        override fun onReceive(c: Context, intent: Intent) {
-          engine?.refreshBluetooth()
-          engine?.let { sendEvent("onBluetoothState", mapOf("state" to it.bluetoothState)) }
-        }
-      }
-      bluetoothReceiver = receiver
-      ContextCompat.registerReceiver(
-        context, receiver, IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED), ContextCompat.RECEIVER_NOT_EXPORTED,
-      )
+      CrosshareRuntime.init(context)
+      CrosshareRuntime.addListener(listener)
     }
 
     OnDestroy {
-      bluetoothReceiver?.let { runCatching { context.unregisterReceiver(it) } }
-      engine?.setDiscovering(false)
-      engine?.setVisible(false)
+      // Visibility outlives the app (tile, background service); discovery doesn't.
+      CrosshareRuntime.removeListener(listener)
+      CrosshareRuntime.engine().setDiscovering(false)
     }
   }
 
@@ -130,61 +136,7 @@ class CrosshareCoreModule : Module() {
     throw UnsupportedOperationException("Wi-Fi Aware pairing is only available on iOS 26+")
   }
 
-  // Engine
-
-  private fun engine(): CrosshareEngine {
-    engine?.let { return it }
-    val e = CrosshareEngine(context, localDevice(), ::hasPermissions)
-    e.listener = object : CrosshareEngine.Listener {
-      override fun onPeersChanged(peers: List<Peer>) {
-        sendEvent("onPeersChanged", mapOf("peers" to peers.map(::peerMap)))
-      }
-
-      override fun onRequest(transfer: Transfer) {
-        sendEvent("onTransferRequest", transferMap(transfer))
-      }
-
-      override fun onTransferUpdate(transfer: Transfer) {
-        sendEvent("onTransferUpdate", transferMap(transfer))
-      }
-    }
-    engine = e
-    return e
-  }
-
-  private fun localDevice(): LocalDevice {
-    val id = prefs.getString("id", null) ?: UUID.randomUUID().toString().also {
-      prefs.edit().putString("id", it).apply()
-    }
-    val name = prefs.getString("name", null)
-      ?: Settings.Global.getString(context.contentResolver, Settings.Global.DEVICE_NAME)
-      ?: "${Build.MANUFACTURER.replaceFirstChar { it.uppercase() }} ${Build.MODEL}"
-    return LocalDevice(id, name, "android")
-  }
-
-  // Permissions
-
-  private fun requiredPermissions(): List<String> {
-    val perms = mutableListOf<String>()
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-      perms += Manifest.permission.BLUETOOTH_SCAN
-      perms += Manifest.permission.BLUETOOTH_ADVERTISE
-      perms += Manifest.permission.BLUETOOTH_CONNECT
-    } else {
-      perms += Manifest.permission.ACCESS_FINE_LOCATION
-    }
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-      perms += Manifest.permission.NEARBY_WIFI_DEVICES
-    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-      // LocalOnlyHotspot still needs location before Android 13.
-      perms += Manifest.permission.ACCESS_FINE_LOCATION
-    }
-    return perms
-  }
-
-  private fun hasPermissions(): Boolean = requiredPermissions().all {
-    ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
-  }
+  private fun engine() = CrosshareRuntime.engine()
 
   // Sharing into the app
 

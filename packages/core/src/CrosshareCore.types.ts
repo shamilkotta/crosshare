@@ -83,6 +83,8 @@ export type CrosshareEvents = {
   onBluetoothState: (event: { state: BluetoothState }) => void;
   /** Android: a share arrived while the app was running. Call getSharedItems(). */
   onShareReceived: () => void;
+  /** Android: visibility changed outside the app (Quick Settings tile or notification). */
+  onVisibilityChanged: (event: { visible: boolean }) => void;
 };
 
 export const isFinalStatus = (s: TransferStatus) =>

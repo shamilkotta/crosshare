@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Crosshare logo (assets/brand/logo.svg), centered in a square, for the tile and notifications. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960"
+    android:tint="#FFFFFF">
+    <group
+        android:translateX="480"
+        android:translateY="577.18">
+        <path
+            android:pathData="M-190.92,-190.92A270,270 0,0 0,-267.99 32.90M190.92,-190.92A270,270 0,0 1,267.99 32.90M-274.36,-274.36A388,388 0,0 0,-385.11 47.29M274.36,-274.36A388,388 0,0 1,385.11 47.29M-88,-96L88,80M88,-96L-88,80"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeWidth="80"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round" />
+    </group>
+</vector>
