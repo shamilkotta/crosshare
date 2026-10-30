@@ -1,7 +1,6 @@
 package com.shudio.crosshare
 import expo.modules.splashscreen.SplashScreenManager
 
-import android.os.Build
 import android.os.Bundle
 
 import com.facebook.react.ReactActivity
@@ -45,21 +44,12 @@ class MainActivity : ReactActivity() {
   }
 
   /**
-    * Align the back button behavior with Android S
-    * where moving root activities to background instead of finishing activities.
-    * @see <a href="https://developer.android.com/reference/android/app/Activity#onBackPressed()">onBackPressed</a>
-    */
+   * Always send the task to the background on back instead of finishing. When the app was opened
+   * from a share (ACTION_SEND, not the launcher) Android would otherwise finish the activity while
+   * the React host stays alive, and the next share recreates the activity on top of it and crashes.
+   * Keeping it alive means later shares arrive through onNewIntent.
+   */
   override fun invokeDefaultOnBackPressed() {
-      if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R) {
-          if (!moveTaskToBack(false)) {
-              // For non-root activities, use the default implementation to finish them.
-              super.invokeDefaultOnBackPressed()
-          }
-          return
-      }
-
-      // Use the default back button implementation on Android S
-      // because it's doing more than [Activity.moveTaskToBack] in fact.
-      super.invokeDefaultOnBackPressed()
+    if (!moveTaskToBack(true)) super.invokeDefaultOnBackPressed()
   }
 }
