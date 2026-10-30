@@ -63,19 +63,19 @@ everything itself.
 
 ## Messages (JSON, discriminated by `t`)
 
-| t | fields | sent by |
-|---|---|---|
-| `hello` | `id`, `name`, `platform`, `v`, `canHost`, `canJoin`, `canAware?` | both, first message |
-| `offer` | `transferId`, `files: [{name,size,mime?}]`, `text?` | initiator |
-| `accept` / `decline` | | responder |
-| `upgradeRequest` | | initiator: asks the responder to host a hotspot |
-| `upgradeOffer` | hotspot: `ssid`, `passphrase`, `host`, `port`, `token`; Wi-Fi Aware: `method: "aware"`, `service`, `passphrase`, `port`, `token` | host |
-| `upgradeFailed` | `reason?`, `token?` (the offer a joiner gave up on) | either side |
-| `upgradeJoin` | `token` | joiner, first message on the new TCP channel |
-| `upgradeOk` | | host, on the new TCP channel |
-| `done` | | initiator, after the last data frame |
-| `complete` | | responder, after the files are saved |
-| `cancel` | `reason?` | either side, at any time |
+| t                    | fields                                                                                                                           | sent by                                         |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `hello`              | `id`, `name`, `platform`, `v`, `canHost`, `canJoin`, `canAware?`                                                                 | both, first message                             |
+| `offer`              | `transferId`, `files: [{name,size,mime?}]`, `text?`                                                                              | initiator                                       |
+| `accept` / `decline` |                                                                                                                                  | responder                                       |
+| `upgradeRequest`     |                                                                                                                                  | initiator: asks the responder to host a hotspot |
+| `upgradeOffer`       | hotspot: `ssid`, `passphrase`, `host`, `port`, `token`; Wi-Fi Aware: `method: "aware"`, `service`, `passphrase`, `port`, `token` | host                                            |
+| `upgradeFailed`      | `reason?`, `token?` (the offer a joiner gave up on)                                                                              | either side                                     |
+| `upgradeJoin`        | `token`                                                                                                                          | joiner, first message on the new TCP channel    |
+| `upgradeOk`          |                                                                                                                                  | host, on the new TCP channel                    |
+| `done`               |                                                                                                                                  | initiator, after the last data frame            |
+| `complete`           |                                                                                                                                  | responder, after the files are saved            |
+| `cancel`             | `reason?`                                                                                                                        | either side, at any time                        |
 
 ## Flow
 

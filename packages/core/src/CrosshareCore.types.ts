@@ -54,7 +54,12 @@ export type Transfer = {
   transferredBytes: number;
 };
 
-export type BluetoothState = 'on' | 'off' | 'unauthorized' | 'unsupported' | 'unknown';
+export type BluetoothState =
+  | 'on'
+  | 'off'
+  | 'unauthorized'
+  | 'unsupported'
+  | 'unknown';
 
 export type OutgoingFile = {
   /** file:// or content:// URI */

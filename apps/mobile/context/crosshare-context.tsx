@@ -93,11 +93,7 @@ async function ensurePermissions() {
   Crosshare.refresh();
 }
 
-export function CrosshareProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function CrosshareProvider({ children }: { children: React.ReactNode }) {
   const initial = useMemo(loadSettings, []);
   const [device, setDevice] = useState<DeviceInfo>(() =>
     Crosshare.getDeviceInfo()

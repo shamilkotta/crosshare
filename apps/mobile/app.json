@@ -38,10 +38,7 @@
           "backgroundColor": "#000000"
         }
       ],
-      [
-        "@crosshare/core",
-        {}
-      ]
+      ["@crosshare/core", {}]
     ],
     "experiments": {
       "typedRoutes": true,

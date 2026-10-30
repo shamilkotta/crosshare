@@ -2,13 +2,13 @@
 
 AirDrop-style sharing between Android, iOS and macOS. You don't need a shared Wi-Fi network.
 
-| Pair | Discovery | Transfer |
-|---|---|---|
-| Any two devices on the same Wi-Fi | Bonjour / mDNS | TCP over the LAN |
-| iPhone ↔ iPhone ↔ Mac, no shared network | Bonjour over AWDL (Apple peer-to-peer Wi-Fi) | TCP over AWDL |
-| Paired iPhones on iOS 26+ | Wi-Fi Aware | TCP over Wi-Fi Aware |
-| Android ↔ Android, no shared network | Bluetooth LE | Bluetooth L2CAP. Large transfers switch to Wi-Fi Aware, or a temporary hotspot if either phone lacks it |
-| Android ↔ iPhone/Mac, no shared network | Bluetooth LE | Bluetooth L2CAP. Large transfers switch to a temporary hotspot hosted by the Android device |
+| Pair                                     | Discovery                                    | Transfer                                                                                                |
+| ---------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Any two devices on the same Wi-Fi        | Bonjour / mDNS                               | TCP over the LAN                                                                                        |
+| iPhone ↔ iPhone ↔ Mac, no shared network | Bonjour over AWDL (Apple peer-to-peer Wi-Fi) | TCP over AWDL                                                                                           |
+| Paired iPhones on iOS 26+                | Wi-Fi Aware                                  | TCP over Wi-Fi Aware                                                                                    |
+| Android ↔ Android, no shared network     | Bluetooth LE                                 | Bluetooth L2CAP. Large transfers switch to Wi-Fi Aware, or a temporary hotspot if either phone lacks it |
+| Android ↔ iPhone/Mac, no shared network  | Bluetooth LE                                 | Bluetooth L2CAP. Large transfers switch to a temporary hotspot hosted by the Android device             |
 
 Everything is end-to-end encrypted (ECDH P-256 + AES-256-GCM) by our own protocol, whatever the link.
 See [docs/PROTOCOL.md](docs/PROTOCOL.md).

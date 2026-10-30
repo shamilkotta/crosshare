@@ -30,7 +30,11 @@ declare class CrosshareCoreModule extends NativeModule<CrosshareEvents> {
    */
   pairWifiAware(mode: 'show' | 'find'): Promise<void>;
   /** Starts sending; progress arrives via onTransferUpdate. Resolves with the transfer id. */
-  send(peerId: string, files: OutgoingFile[], text?: string | null): Promise<string>;
+  send(
+    peerId: string,
+    files: OutgoingFile[],
+    text?: string | null
+  ): Promise<string>;
   /**
    * Takes what another app shared to Crosshare, if anything (each share is returned once).
    * Call on launch, when the app becomes active, and on onShareReceived.

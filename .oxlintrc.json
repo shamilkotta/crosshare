@@ -1,0 +1,42 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "eslint",
+    "typescript",
+    "unicorn",
+    "oxc",
+    "react",
+    "import",
+    "jsx-a11y"
+  ],
+  "categories": {
+    "correctness": "error"
+  },
+  "env": {
+    "browser": true,
+    "es2024": true,
+    "node": true
+  },
+  "globals": {
+    "__DEV__": "readonly"
+  },
+  "settings": {
+    "react": {
+      "version": "19.1.0"
+    }
+  },
+  "rules": {
+    // Reanimated writes shared values during render and in effects.
+    "react/immutability": "off",
+    "react/set-state-in-effect": "off"
+  },
+  "ignorePatterns": [
+    "dist/**",
+    "build/**",
+    ".expo/**",
+    "apps/mobile/ios/**",
+    "apps/mobile/android/**",
+    "apps/mac/**",
+    "coverage/**"
+  ]
+}

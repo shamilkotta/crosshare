@@ -59,13 +59,19 @@ const withCrosshare = (config, props = {}) => {
   if (hotspot || wifiAware || share) {
     config = withEntitlementsPlist(config, (config) => {
       if (hotspot) {
-        config.modResults['com.apple.developer.networking.HotspotConfiguration'] = true;
+        config.modResults[
+          'com.apple.developer.networking.HotspotConfiguration'
+        ] = true;
       }
       if (wifiAware) {
-        config.modResults['com.apple.developer.wifi-aware'] = ['Publish', 'Subscribe'];
+        config.modResults['com.apple.developer.wifi-aware'] = [
+          'Publish',
+          'Subscribe',
+        ];
       }
       if (share) {
-        const groups = config.modResults['com.apple.security.application-groups'] || [];
+        const groups =
+          config.modResults['com.apple.security.application-groups'] || [];
         config.modResults['com.apple.security.application-groups'] = Array.from(
           new Set([...groups, appGroup(config)])
         );
@@ -88,7 +94,9 @@ const withCrosshare = (config, props = {}) => {
 const withAndroidShareTarget = (config) =>
   withAndroidManifest(config, (config) => {
     const app = config.modResults.manifest.application?.[0];
-    const activity = app?.activity?.find((a) => a.$['android:name'] === '.MainActivity');
+    const activity = app?.activity?.find(
+      (a) => a.$['android:name'] === '.MainActivity'
+    );
     if (!activity) return config;
     const filter = (action) => ({
       action: [{ $: { 'android:name': action } }],
@@ -124,10 +132,18 @@ const withShareExtensionFiles = (config) =>
   withDangerousMod(config, [
     'ios',
     (config) => {
-      const dir = path.join(config.modRequest.platformProjectRoot, SHARE_TARGET);
+      const dir = path.join(
+        config.modRequest.platformProjectRoot,
+        SHARE_TARGET
+      );
       fs.mkdirSync(dir, { recursive: true });
       fs.copyFileSync(
-        path.join(__dirname, 'ios', 'ShareExtension', 'ShareViewController.swift'),
+        path.join(
+          __dirname,
+          'ios',
+          'ShareExtension',
+          'ShareViewController.swift'
+        ),
         path.join(dir, 'ShareViewController.swift')
       );
       fs.writeFileSync(
@@ -176,14 +192,36 @@ const withShareExtensionTarget = (config) =>
 
     const bundleId = `${config.ios?.bundleIdentifier}.share`;
     const mainTarget = project.getFirstTarget();
-    const target = project.addTarget(SHARE_TARGET, 'app_extension', SHARE_TARGET, bundleId);
+    const target = project.addTarget(
+      SHARE_TARGET,
+      'app_extension',
+      SHARE_TARGET,
+      bundleId
+    );
     project.addBuildPhase([], 'PBXSourcesBuildPhase', 'Sources', target.uuid);
-    project.addBuildPhase([], 'PBXResourcesBuildPhase', 'Resources', target.uuid);
-    project.addBuildPhase([], 'PBXFrameworksBuildPhase', 'Frameworks', target.uuid);
+    project.addBuildPhase(
+      [],
+      'PBXResourcesBuildPhase',
+      'Resources',
+      target.uuid
+    );
+    project.addBuildPhase(
+      [],
+      'PBXFrameworksBuildPhase',
+      'Frameworks',
+      target.uuid
+    );
 
     const group = project.addPbxGroup([], SHARE_TARGET, SHARE_TARGET);
-    project.addToPbxGroup(group.uuid, project.getFirstProject().firstProject.mainGroup);
-    project.addSourceFile('ShareViewController.swift', { target: target.uuid }, group.uuid);
+    project.addToPbxGroup(
+      group.uuid,
+      project.getFirstProject().firstProject.mainGroup
+    );
+    project.addSourceFile(
+      'ShareViewController.swift',
+      { target: target.uuid },
+      group.uuid
+    );
     project.addFile('Info.plist', group.uuid);
     project.addFile(`${SHARE_TARGET}.entitlements`, group.uuid);
 
@@ -198,7 +236,11 @@ const withShareExtensionTarget = (config) =>
 
     const mainSettings = buildSettingsOf(project, mainTarget.firstTarget);
     const team = config.ios?.appleTeamId || mainSettings?.DEVELOPMENT_TEAM;
-    for (const settings of buildSettingsOf(project, target.pbxNativeTarget, true)) {
+    for (const settings of buildSettingsOf(
+      project,
+      target.pbxNativeTarget,
+      true
+    )) {
       Object.assign(settings, {
         INFOPLIST_FILE: `${SHARE_TARGET}/Info.plist`,
         CODE_SIGN_ENTITLEMENTS: `${SHARE_TARGET}/${SHARE_TARGET}.entitlements`,
@@ -221,13 +263,19 @@ function buildSettingsOf(project, nativeTarget, all = false) {
   const lists = project.pbxXCConfigurationList();
   const configs = project.pbxXCBuildConfigurationSection();
   const list = lists[nativeTarget.buildConfigurationList];
-  const settings = (list?.buildConfigurations || []).map((c) => configs[c.value].buildSettings);
+  const settings = (list?.buildConfigurations || []).map(
+    (c) => configs[c.value].buildSettings
+  );
   return all ? settings : settings[0];
 }
 
 /** Minimal plist serializer (strings, numbers, booleans, arrays, dictionaries). */
 function plist(value) {
-  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const esc = (s) =>
+    String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
   const node = (v, indent) => {
     const pad = '  '.repeat(indent);
     if (Array.isArray(v)) {

@@ -2,17 +2,18 @@
   "name": "crosshare",
   "version": "1.0.0",
   "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "pnpm -r lint",
-    "format": "prettier --write ."
+    "lint": "oxlint",
+    "format": "oxfmt"
   },
   "devDependencies": {
-    "prettier": "^3.7.4"
+    "oxfmt": "^0.75.0",
+    "oxlint": "^1.90.0"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "packageManager": "pnpm@10.15.0"
 }

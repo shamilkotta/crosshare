@@ -2,39 +2,39 @@
   "name": "@crosshare/core",
   "version": "0.1.0",
   "description": "Nearby device discovery and file transfer for Crosshare (Wi-Fi, Bluetooth LE, AWDL, hotspot)",
+  "keywords": [
+    "airdrop",
+    "bluetooth",
+    "crosshare",
+    "expo",
+    "mdns",
+    "nearby",
+    "react-native"
+  ],
+  "homepage": "https://github.com/shamilkotta/crosshare",
+  "license": "MIT",
+  "author": "Shamil Kotta",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shamilkotta/crosshare"
+  },
   "main": "src/index.ts",
   "types": "src/index.ts",
-  "homepage": "https://github.com/shamilkotta/crosshare",
   "scripts": {
     "build": "expo-module build",
     "clean": "expo-module clean",
-    "lint": "expo-module lint",
+    "lint": "oxlint -c ../../.oxlintrc.json .",
     "test": "expo-module test",
     "prepare": "expo-module prepare",
     "prepublishOnly": "expo-module prepublishOnly",
     "expo-module": "expo-module"
   },
-  "keywords": [
-    "react-native",
-    "expo",
-    "airdrop",
-    "nearby",
-    "bluetooth",
-    "mdns",
-    "crosshare"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/shamilkotta/crosshare"
-  },
-  "author": "Shamil Kotta",
-  "license": "MIT",
   "dependencies": {},
   "devDependencies": {
     "@expo/config-plugins": "~9.0.0",
     "@types/react": "~19.1.0",
-    "expo-module-scripts": "^5.0.8",
     "expo": "^54.0.27",
+    "expo-module-scripts": "^5.0.8",
     "react-native": "0.81.5"
   },
   "peerDependencies": {
