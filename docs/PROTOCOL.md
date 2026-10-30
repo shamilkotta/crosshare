@@ -65,14 +65,16 @@ everything itself.
 
 | t                    | fields                                                                                                                           | sent by                                         |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| `hello`              | `id`, `name`, `platform`, `v`, `canHost`, `canJoin`, `canAware?`                                                                 | both, first message                             |
-| `offer`              | `transferId`, `files: [{name,size,mime?}]`, `text?`                                                                              | initiator                                       |
+| `hello`              | `id`, `name`, `platform`, `v`, `canHost`, `canJoin`, `canAware?`, `key?`, `sig?`, `linked?` (see Linked devices)                 | both, first message                             |
+| `offer`              | `transferId`, `files: [{name,size,mime?}]`, `text?`, `kind?` (`"link"` or `"unlink"`), `commit?`                                 | initiator                                       |
 | `accept` / `decline` |                                                                                                                                  | responder                                       |
 | `upgradeRequest`     |                                                                                                                                  | initiator: asks the responder to host a hotspot |
 | `upgradeOffer`       | hotspot: `ssid`, `passphrase`, `host`, `port`, `token`; Wi-Fi Aware: `method: "aware"`, `service`, `passphrase`, `port`, `token` | host                                            |
 | `upgradeFailed`      | `reason?`, `token?` (the offer a joiner gave up on)                                                                              | either side                                     |
 | `upgradeJoin`        | `token`                                                                                                                          | joiner, first message on the new TCP channel    |
 | `upgradeOk`          |                                                                                                                                  | host, on the new TCP channel                    |
+| `linkNonce`          | `nonce`                                                                                                                          | responder, link offers only                     |
+| `linkReveal`         | `nonce`                                                                                                                          | initiator, link offers only                     |
 | `done`               |                                                                                                                                  | initiator, after the last data frame            |
 | `complete`           |                                                                                                                                  | responder, after the files are saved            |
 | `cancel`             | `reason?`                                                                                                                        | either side, at any time                        |
@@ -94,6 +96,48 @@ initiator                               responder
 Data frames carry the files back to back in offer order. The receiver moves to
 the next file once it has received `size` bytes; zero-byte files get no data
 frames.
+
+## Linked devices
+
+Each device has a long-term P-256 identity key, created on first launch and kept in app storage.
+
+- `hello.key`: the identity public key, uncompressed X9.63, hex.
+- `hello.sig`: ECDSA-SHA256 over `"crosshare/v1/auth" || salt || role`, DER, hex. `salt` is the
+  secure-channel salt above, so a signature only fits this one handshake. `role` is `"i"` from the
+  initiator and `"r"` from the responder, so a signature can't be reflected back.
+- `hello.linked`: whether the sender has the receiver linked. The initiator sends it for the device
+  it meant to reach, and the responder for the initiator's `id`.
+
+A hello whose signature doesn't verify is treated as anonymous: everything still works, but it is
+never trusted and can't link.
+
+**Linking.** Both users compare a six-digit code, so a device in the middle is caught:
+
+1. Initiator → `offer` with `kind: "link"`, no files or text, and `commit` = SHA256(`nI`), where `nI`
+   is 32 random bytes.
+2. Responder → `linkNonce` with `nonce` = `nR`, 32 random bytes.
+3. Initiator → `linkReveal` with `nonce` = `nI`. The responder checks it against `commit`.
+4. Both compute `code` = first 4 bytes of SHA256(`"crosshare/v1/code" || salt || initiatorKey ||
+   responderKey || nI || nR`) as a big-endian u32, mod 1,000,000, as six digits.
+5. Both users check the codes match. The responder answers `accept` / `decline`. The initiator
+   waits for its own user too, and sends `cancel` if they back out.
+6. The initiator saves the link once both sides said yes, then sends `done`. The responder saves
+   it on `done` and replies `complete`.
+
+The initiator commits to `nI` before seeing `nR`, and the responder picks `nR` before seeing `nI`.
+So a device in the middle, running two handshakes, can't choose values that make both codes match:
+it gets one guess in a million.
+
+**Trusted text.** An offer with no files and some `text`, from a linked `id` whose verified `key`
+matches the saved one, is accepted without asking. Files always ask.
+
+**Unlinking.** Either side removes its link locally. If the peer is nearby, it also sends an `offer`
+with `kind: "unlink"`, which the receiver declines without telling its user. Whatever the route, a
+verified hello with `linked: false` from a linked device makes the receiver drop its side, so a
+link removed while the other device was away is dropped the next time they connect. Since that
+hello must be signed with the saved key, nobody else can unlink you.
+
+Received text (trusted or accepted) is copied to the receiver's clipboard.
 
 ## Bandwidth upgrade (BLE route only)
 

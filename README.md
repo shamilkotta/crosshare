@@ -10,13 +10,28 @@ AirDrop-style sharing between Android, iOS and macOS. You don't need a shared Wi
 | Android ↔ Android, no shared network     | Bluetooth LE                                 | Bluetooth L2CAP. Large transfers switch to Wi-Fi Aware, or a temporary hotspot if either phone lacks it |
 | Android ↔ iPhone/Mac, no shared network  | Bluetooth LE                                 | Bluetooth L2CAP. Large transfers switch to a temporary hotspot hosted by the Android device             |
 
-Everything is end-to-end encrypted (ECDH P-256 + AES-256-GCM) by our own protocol, whatever the link.
+Every transfer is encrypted (ECDH P-256 + AES-256-GCM) by our own protocol, whatever the link. Linked devices also verify each other's identity key, so their transfers are authenticated end to end.
 See [docs/PROTOCOL.md](docs/PROTOCOL.md).
+
+## Linked devices and text
+
+Link two devices once (tap a device › Link device on mobile, or right-click a device › Link Device… on
+the Mac). Both screens show the same six-digit code; confirm on both if it matches. After that, text sent between them skips the prompt and lands
+straight on the other device's clipboard. Files still ask. Links survive restarts until either device
+removes them, and removing on one side removes on both. Each device signs its handshake with a
+long-term key, so a nearby device can't pretend to be a linked one.
+
+Received text from any device is copied to the clipboard once accepted. To send text:
+
+- **Mobile**: Text or Paste on the home screen, then tap a device. Or tap a device first and pick
+  Text or Clipboard.
+- **macOS**: select text in any app › right-click › Services › Send with Crosshare, then pick a
+  device. Or use Text/Paste in the window (⌘T/⌘V), or right-click a device › Send Text….
 
 ## Sharing from other apps
 
 Crosshare appears in each platform's share menu. Picking it opens Crosshare with the files or
-text selected, on the screen that looks for nearby devices.
+text selected; tap a device to send.
 
 - **Android**: the share sheet (one or more files, or text), and "Open with" for any file.
 - **iOS**: a share extension (`CrosshareShare`) in the share sheet. It copies what you shared into
@@ -49,7 +64,7 @@ scripts/generate-icons.py  Regenerates every icon (iOS, Android, macOS, splash, 
 ```sh
 pnpm install
 cd apps/mobile
-npx expo prebuild          # generates ios/ and android/ (not committed)
+npx expo prebuild          # regenerates ios/ and android/ after config changes
 npx expo run:android --device
 npx expo run:ios --device
 ```
@@ -63,7 +78,7 @@ on your App ID. If your team can't use it, set `["@crosshare/core", { "hotspot":
 
 Wi-Fi Aware (iOS 26+) needs the **Wi-Fi Aware** capability, which is only available to paid
 developer teams. To build without it, set `{ "wifiAware": false }` in the same plugin options.
-Pair devices once from the profile screen (Show code / Enter code). The frameworks are
+Pair devices once from Settings › Wi-Fi Aware (Show code / Enter code). The frameworks are
 weak-linked, so the app still runs on iOS 15.1–25.
 
 ### macOS
