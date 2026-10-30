@@ -1,6 +1,7 @@
 import AppKit
 import CrosshareKit
 import Foundation
+import UserNotifications
 
 /// Files or text handed to Crosshare by another app, waiting for the user to pick a device.
 struct PendingShare: Equatable {
@@ -105,6 +106,11 @@ final class AppModel: ObservableObject, CrosshareEngineDelegate {
   func cancel(_ t: Transfer) { engine.cancel(transferId: t.id) }
   func clearFinished() { transfers.removeAll { $0.status.isFinal } }
 
+  func respondToNotification(transferId: String, accept: Bool) {
+    guard let transfer = transfers.first(where: { $0.id == transferId }) else { return }
+    respond(transfer, accept: accept)
+  }
+
   /// Folders are sent as their files (flattened).
   private func expand(_ urls: [URL]) -> [URL] {
     urls.flatMap { url -> [URL] in
@@ -135,8 +141,37 @@ final class AppModel: ObservableObject, CrosshareEngineDelegate {
 
   func engineDidReceiveRequest(_ transfer: Transfer) {
     upsert(transfer)
-    NSApp.requestUserAttention(.criticalRequest)
-    NSApp.activate(ignoringOtherApps: true)
+    postIncomingNotification(for: transfer)
+  }
+
+  private func postIncomingNotification(for transfer: Transfer) {
+    let content = UNMutableNotificationContent()
+    content.title = "\(transfer.peerName) wants to share"
+    content.body = notificationBody(for: transfer)
+    content.sound = .default
+    content.categoryIdentifier = "INCOMING_TRANSFER"
+    let request = UNNotificationRequest(identifier: transfer.id, content: content, trigger: nil)
+    let center = UNUserNotificationCenter.current()
+    center.getNotificationSettings { settings in
+      let allowed = settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional
+      DispatchQueue.main.async {
+        if allowed {
+          center.add(request) { error in
+            if error != nil { DispatchQueue.main.async { RequestToast.show(transfer) } }
+          }
+        } else {
+          RequestToast.show(transfer)
+        }
+      }
+    }
+  }
+
+  private func notificationBody(for transfer: Transfer) -> String {
+    if transfer.files.isEmpty { return transfer.text ?? "" }
+    let size = ByteCountFormatter.string(fromByteCount: transfer.totalBytes, countStyle: .file)
+    let names = transfer.files.prefix(2).map(\.name).joined(separator: ", ")
+    let more = transfer.files.count > 2 ? " +\(transfer.files.count - 2) more" : ""
+    return "\(names)\(more) · \(size)"
   }
 
   func engineDidUpdateTransfer(_ transfer: Transfer) {
@@ -148,6 +183,10 @@ final class AppModel: ObservableObject, CrosshareEngineDelegate {
   }
 
   private func upsert(_ t: Transfer) {
+    if t.status != .waiting {
+      RequestToast.dismiss(t.id)
+      UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [t.id])
+    }
     if let i = transfers.firstIndex(where: { $0.id == t.id }) {
       transfers[i] = t
     } else {
