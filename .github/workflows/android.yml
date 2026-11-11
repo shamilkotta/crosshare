@@ -101,14 +101,22 @@ jobs:
       - name: Build
         working-directory: apps/mobile/android
         env:
-          ORG_GRADLE_PROJECT_crosshare.channel: ${{ steps.meta.outputs.channel }}
-          ORG_GRADLE_PROJECT_crosshare.versionName: ${{ steps.meta.outputs.version }}
-          ORG_GRADLE_PROJECT_crosshare.versionCode: ${{ github.run_number }}
-          ORG_GRADLE_PROJECT_crosshare.upload.storeFile: ${{ runner.temp }}/upload.jks
-          ORG_GRADLE_PROJECT_crosshare.upload.storePassword: ${{ secrets.ANDROID_UPLOAD_STORE_PASSWORD }}
-          ORG_GRADLE_PROJECT_crosshare.upload.keyAlias: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
-          ORG_GRADLE_PROJECT_crosshare.upload.keyPassword: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
-        run: ./gradlew :app:assembleRelease :app:bundleRelease --no-daemon
+          CHANNEL: ${{ steps.meta.outputs.channel }}
+          VERSION_NAME: ${{ steps.meta.outputs.version }}
+          VERSION_CODE: ${{ github.run_number }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
+        run: |
+          ./gradlew :app:assembleRelease :app:bundleRelease --no-daemon \
+            "-Dorg.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g" \
+            "-Pcrosshare.channel=$CHANNEL" \
+            "-Pcrosshare.versionName=$VERSION_NAME" \
+            "-Pcrosshare.versionCode=$VERSION_CODE" \
+            "-Pcrosshare.upload.storeFile=$RUNNER_TEMP/upload.jks" \
+            "-Pcrosshare.upload.storePassword=$STORE_PASSWORD" \
+            "-Pcrosshare.upload.keyAlias=$KEY_ALIAS" \
+            "-Pcrosshare.upload.keyPassword=$KEY_PASSWORD"
 
       - name: Collect outputs
         env:
