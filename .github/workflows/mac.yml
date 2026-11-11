@@ -60,7 +60,9 @@ jobs:
             fi
             channel=stable tag="$GITHUB_REF_NAME" name="Crosshare" asset="Crosshare-$version-mac-universal"
           else
-            version="$(/usr/bin/env python3 -c 'import plistlib;print(plistlib.load(open("apps/mac/Info.plist","rb"))["CFBundleShortVersionString"])')"
+            base="$(/usr/bin/env python3 -c 'import plistlib;print(plistlib.load(open("apps/mac/Info.plist","rb"))["CFBundleShortVersionString"])')"
+            version="$base-nightly.$(date -u +%Y%m%d).${GITHUB_SHA::7}"
+            build="$version"
             channel=nightly tag=mac-nightly name="Crosshare (Nightly)" asset="Crosshare-nightly-mac-universal"
           fi
           {
@@ -189,4 +191,4 @@ jobs:
 
       - name: Replace the nightly release
         if: env.CHANNEL == 'nightly'
-        run: .github/scripts/publish-release.sh nightly "$TAG" "$APP_NAME for Mac $VERSION ($BUILD)" false apps/mac packages/core/Package.swift packages/core/ios/Kit
+        run: .github/scripts/publish-release.sh nightly "$TAG" "$APP_NAME for Mac $VERSION" false apps/mac packages/core/Package.swift packages/core/ios/Kit
