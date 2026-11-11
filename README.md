@@ -81,12 +81,32 @@ developer teams. To build without it, set `{ "wifiAware": false }` in the same p
 Pair devices once from Settings › Wi-Fi Aware (Show code / Enter code). The frameworks are
 weak-linked, so the app still runs on iOS 15.1–25.
 
+### Android releases
+
+`.github/workflows/android.yml` builds a signed release APK and AAB:
+
+- **Nightly:** every push to `main` touching `apps/mobile` or `packages/core` replaces the `android-nightly` prerelease. It is `studio.shudio.crosshare.nightly`, "Crosshare (Nightly)", installable beside the stable app.
+- **Stable:** `git tag -a android-v1.2.0 -m "notes" && git push origin android-v1.2.0`.
+
+Needs the repo secrets `ANDROID_UPLOAD_KEYSTORE` (base64 `.jks`), `ANDROID_UPLOAD_STORE_PASSWORD`, `ANDROID_UPLOAD_KEY_ALIAS`, `ANDROID_UPLOAD_KEY_PASSWORD`.
+Local release builds take the same values as Gradle properties (`crosshare.upload.storeFile`, `.storePassword`, `.keyAlias`, `.keyPassword`), e.g. in `~/.gradle/gradle.properties`.
+
 ### macOS
 
 ```sh
 apps/mac/build.sh
 open apps/mac/build/Crosshare.app
 ```
+
+`CROSSHARE_CHANNEL=nightly apps/mac/build.sh` builds `Crosshare (Nightly).app`, which installs beside
+the stable app.
+
+Releases (`.github/workflows/mac.yml`, signed and notarized):
+
+- **Nightly:** every push to `main` touching `apps/mac` or the Swift core replaces the `mac-nightly` prerelease.
+- **Stable:** `git tag -a mac-v1.2.0 -m "notes" && git push origin mac-v1.2.0`. The tag message becomes the release notes.
+
+Needs the repo secrets `CSC_LINK`, `CSC_KEY_PASSWORD`, `APPLE_API_KEY`, `APPLE_API_KEY_ID`, `APPLE_API_ISSUER`.
 
 Received files go to `~/Downloads`. On Android they go to `Downloads/Crosshare`; on iOS to
 Files › On My iPhone › Crosshare.

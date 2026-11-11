@@ -1,0 +1,204 @@
+name: Mac release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/mac/**"
+      - "packages/core/Package.swift"
+      - "packages/core/ios/Kit/**"
+      - ".github/workflows/mac.yml"
+    tags: ["mac-v*"]
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish to the nightly release"
+        required: false
+        default: true
+        type: boolean
+
+concurrency:
+  group: mac-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref_type != 'tag' }}
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    name: Resolve version
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      channel: ${{ steps.meta.outputs.channel }}
+      version: ${{ steps.meta.outputs.version }}
+      build: ${{ steps.meta.outputs.build }}
+      tag: ${{ steps.meta.outputs.tag }}
+      name: ${{ steps.meta.outputs.name }}
+      asset: ${{ steps.meta.outputs.asset }}
+      publish: ${{ steps.meta.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - id: meta
+        shell: bash
+        env:
+          INPUT_PUBLISH: ${{ inputs.publish }}
+        run: |
+          publish=true
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" && "$INPUT_PUBLISH" != "true" ]]; then
+            publish=false
+          fi
+
+          build="$(date -u +%Y%m%d%H%M)"
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            version="${GITHUB_REF_NAME#mac-v}"
+            if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::Tag must look like mac-v1.2.3, got $GITHUB_REF_NAME"
+              exit 1
+            fi
+            channel=stable tag="$GITHUB_REF_NAME" name="Crosshare" asset="Crosshare-$version-mac-universal"
+          else
+            version="$(/usr/bin/env python3 -c 'import plistlib;print(plistlib.load(open("apps/mac/Info.plist","rb"))["CFBundleShortVersionString"])')"
+            channel=nightly tag=mac-nightly name="Crosshare (Nightly)" asset="Crosshare-nightly-mac-universal"
+          fi
+          {
+            echo "channel=$channel"
+            echo "version=$version"
+            echo "build=$build"
+            echo "tag=$tag"
+            echo "name=$name"
+            echo "asset=$asset"
+            echo "publish=$publish"
+          } >> "$GITHUB_OUTPUT"
+          echo "$name $version ($build), publish: $publish"
+
+  build:
+    name: Build macOS app
+    needs: [preflight]
+    runs-on: macos-15
+    timeout-minutes: 120
+    env:
+      CROSSHARE_CHANNEL: ${{ needs.preflight.outputs.channel }}
+      CROSSHARE_VERSION: ${{ needs.preflight.outputs.version }}
+      CROSSHARE_BUILD: ${{ needs.preflight.outputs.build }}
+      CROSSHARE_UNIVERSAL: "1"
+      APP_NAME: ${{ needs.preflight.outputs.name }}
+      ASSET: ${{ needs.preflight.outputs.asset }}
+      PUBLISH: ${{ needs.preflight.outputs.publish }}
+    defaults:
+      run:
+        working-directory: apps/mac
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Import signing certificate
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+        run: |
+          if [[ -z "$CSC_LINK" || -z "$CSC_KEY_PASSWORD" ]]; then
+            if [[ "$PUBLISH" == "true" ]]; then
+              echo "::error::Releases must be signed: set CSC_LINK and CSC_KEY_PASSWORD."
+              exit 1
+            fi
+            echo "::warning::Signing secrets are missing; building an ad-hoc signed app."
+            exit 0
+          fi
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          cert="$RUNNER_TEMP/cert.p12"
+          printf '%s' "$CSC_LINK" | base64 --decode > "$cert"
+          security create-keychain -p "" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "" "$keychain"
+          security import "$cert" -k "$keychain" -P "$CSC_KEY_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" "$keychain"
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+          identity="$(security find-identity -v -p codesigning "$keychain" | grep -o '"Developer ID Application:[^"]*"' | head -1 | tr -d '"')"
+          echo "CROSSHARE_SIGN_IDENTITY=$identity" >> "$GITHUB_ENV"
+
+      - name: Build
+        run: ./build.sh
+
+      - name: Package
+        run: |
+          mkdir -p out
+          ditto -c -k --keepParent "build/$APP_NAME.app" "out/$ASSET.zip"
+
+      - name: Notarize
+        if: env.CROSSHARE_SIGN_IDENTITY != ''
+        env:
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: |
+          key="$RUNNER_TEMP/AuthKey_${APPLE_API_KEY_ID}.p8"
+          printf '%s' "$APPLE_API_KEY" > "$key"
+          xcrun notarytool submit "out/$ASSET.zip" \
+            --key "$key" --key-id "$APPLE_API_KEY_ID" --issuer "$APPLE_API_ISSUER" --wait
+          xcrun stapler staple "build/$APP_NAME.app"
+          rm "out/$ASSET.zip"
+          ditto -c -k --keepParent "build/$APP_NAME.app" "out/$ASSET.zip"
+
+      - name: Create DMG
+        run: |
+          staging="$RUNNER_TEMP/dmg"
+          mkdir -p "$staging"
+          cp -R "build/$APP_NAME.app" "$staging/"
+          ln -s /Applications "$staging/Applications"
+          hdiutil create -volname "$APP_NAME" -srcfolder "$staging" -ov -format UDZO "out/$ASSET.dmg"
+          if [[ -n "${CROSSHARE_SIGN_IDENTITY:-}" ]]; then
+            codesign --sign "$CROSSHARE_SIGN_IDENTITY" --timestamp "out/$ASSET.dmg"
+          fi
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.ASSET }}
+          path: apps/mac/out/*
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: [preflight, build]
+    if: needs.preflight.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      CHANNEL: ${{ needs.preflight.outputs.channel }}
+      VERSION: ${{ needs.preflight.outputs.version }}
+      BUILD: ${{ needs.preflight.outputs.build }}
+      TAG: ${{ needs.preflight.outputs.tag }}
+      APP_NAME: ${{ needs.preflight.outputs.name }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: ${{ needs.preflight.outputs.asset }}
+          path: release-assets
+
+      - name: Publish stable release
+        if: env.CHANNEL == 'stable'
+        run: |
+          git fetch --force origin "refs/tags/$TAG:refs/tags/$TAG"
+          notes="$(git tag -l --format='%(contents)' "$TAG")"
+          gh release create "$TAG" release-assets/* \
+            --title "$APP_NAME for Mac $VERSION" \
+            --notes "${notes:-Crosshare for Mac $VERSION}" \
+            --verify-tag
+
+      - name: Replace the nightly release
+        if: env.CHANNEL == 'nightly'
+        run: |
+          git tag -f "$TAG" "$GITHUB_SHA"
+          git push -f origin "refs/tags/$TAG"
+          gh release delete "$TAG" --yes 2>/dev/null || true
+          gh release create "$TAG" release-assets/* \
+            --title "$APP_NAME for Mac $VERSION ($BUILD)" \
+            --notes "Built from \`${GITHUB_SHA::7}\`. Unstable; for testing only." \
+            --prerelease --latest=false --verify-tag

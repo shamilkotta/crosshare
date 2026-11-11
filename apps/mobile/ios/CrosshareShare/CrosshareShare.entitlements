@@ -4,7 +4,7 @@
 <dict>
   <key>com.apple.security.application-groups</key>
   <array>
-    <string>group.com.shudio.crosshare</string>
+    <string>group.studio.shudio.crosshare</string>
   </array>
 </dict>
 </plist>

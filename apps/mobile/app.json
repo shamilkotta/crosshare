@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.shudio.crosshare"
+      "bundleIdentifier": "studio.shudio.crosshare"
     },
     "android": {
       "adaptiveIcon": {
@@ -21,7 +21,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.shudio.crosshare"
+      "package": "studio.shudio.crosshare"
     },
     "web": {
       "output": "static",

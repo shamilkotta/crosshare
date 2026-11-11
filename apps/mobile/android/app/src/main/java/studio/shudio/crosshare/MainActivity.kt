@@ -1,4 +1,4 @@
-package com.shudio.crosshare
+package studio.shudio.crosshare
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Bundle

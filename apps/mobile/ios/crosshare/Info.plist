@@ -28,7 +28,7 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>crosshare</string>
-          <string>com.shudio.crosshare</string>
+          <string>studio.shudio.crosshare</string>
         </array>
       </dict>
       <dict>
@@ -41,7 +41,7 @@
     <key>CFBundleVersion</key>
     <string>1</string>
     <key>CrosshareAppGroup</key>
-    <string>group.com.shudio.crosshare</string>
+    <string>group.studio.shudio.crosshare</string>
     <key>CrosshareHotspotJoin</key>
     <true/>
     <key>LSMinimumSystemVersion</key>

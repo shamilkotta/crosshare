@@ -1,4 +1,4 @@
-package com.shudio.crosshare
+package studio.shudio.crosshare
 
 import android.app.Application
 import android.content.res.Configuration
