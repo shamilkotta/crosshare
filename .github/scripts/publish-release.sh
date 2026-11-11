@@ -29,8 +29,6 @@ if [[ -n "$previous" ]]; then
 **Full Changelog:** https://github.com/$GITHUB_REPOSITORY/compare/${previous::7}...${GITHUB_SHA::7}"
 fi
 
-git tag -f "$tag" "$GITHUB_SHA"
-git push -f origin "refs/tags/$tag"
-gh release delete "$tag" --yes 2>/dev/null || true
-gh release create "$tag" release-assets/* --title "$title" --notes "$notes" \
-  --prerelease --latest=false --verify-tag
+gh release delete "$tag" --yes --cleanup-tag 2>/dev/null || true
+gh release create "$tag" release-assets/* --target "$GITHUB_SHA" --title "$title" --notes "$notes" \
+  --prerelease --latest=false
